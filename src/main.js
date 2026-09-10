@@ -90,9 +90,14 @@ const baseIntensity = fireLight.userData.baseIntensity;
 const clock = new THREE.Clock();
 
 function animate() {
-  const t = clock.getElapsedTime();
+  // Clamped so a backgrounded tab does not fast-forward the whole simulation
+  // on its next frame. The cost is that below ~20fps the cycle runs in slow
+  // motion rather than skipping ahead, which is the safer failure.
+  const delta = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
   fireLight.intensity =
     baseIntensity * (0.86 + 0.14 * Math.sin(t * 9.3) * Math.sin(t * 3.1));
+  shop.userData.simulation.update(delta);
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
