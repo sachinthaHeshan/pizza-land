@@ -127,7 +127,9 @@ export function createStorefront(materials, layout) {
     box(materials.sign, {
       x: s.sign.x,
       y: s.sign.y,
-      z: [s.z + s.sign.thickness / 2, s.z + s.sign.thickness / 2 + 0.04],
+      // Sits proud of the stone surround (which ends at +thickness/2 + 0.06),
+      // otherwise the board is buried inside it and the motif never shows.
+      z: [s.z + s.sign.thickness / 2 + 0.06, s.z + s.sign.thickness / 2 + 0.1],
     })
   );
 

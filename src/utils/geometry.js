@@ -3,8 +3,41 @@ import * as THREE from 'three';
 const mid = (range) => (range[0] + range[1]) / 2;
 const size = (range) => range[1] - range[0];
 
+function tileOf(material) {
+  const tile = material && material.userData ? material.userData.tile : null;
+  return typeof tile === 'number' && tile > 0 ? tile : null;
+}
+
+// Rescales a UV attribute in place so `spans[face]` world units map to one
+// texture image. Without this, a 20-unit wall and a 1-unit post both get UVs
+// 0..1 and the brick coursing smears to a different size on every surface.
+export function scaleUVs(geometry, spans, tile) {
+  if (!tile) return geometry;
+  const uv = geometry.attributes.uv;
+  const perFace = uv.count / spans.length;
+  for (let face = 0; face < spans.length; face++) {
+    const [su, sv] = spans[face];
+    for (let i = 0; i < perFace; i++) {
+      const index = face * perFace + i;
+      uv.setXY(index, uv.getX(index) * (su / tile), uv.getY(index) * (sv / tile));
+    }
+  }
+  uv.needsUpdate = true;
+  return geometry;
+}
+
 export function box(material, { x, y, z }) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(size(x), size(y), size(z)), material);
+  const w = size(x);
+  const h = size(y);
+  const d = size(z);
+  const geometry = new THREE.BoxGeometry(w, h, d);
+  // BoxGeometry face order is +X, -X, +Y, -Y, +Z, -Z.
+  scaleUVs(
+    geometry,
+    [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]],
+    tileOf(material)
+  );
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(mid(x), mid(y), mid(z));
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -12,7 +45,9 @@ export function box(material, { x, y, z }) {
 }
 
 export function slab(material, { x, z, y = 0 }) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size(x), size(z)), material);
+  const geometry = new THREE.PlaneGeometry(size(x), size(z));
+  scaleUVs(geometry, [[size(x), size(z)]], tileOf(material));
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(mid(x), y, mid(z));
   mesh.castShadow = false;
@@ -61,14 +96,19 @@ export function awning(material, { x, wallZ, wallY, frontZ, frontY, valance }) {
   group.name = 'awning';
 
   const depth = Math.hypot(frontZ - wallZ, wallY - frontY);
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(size(x), depth), material);
+  const tile = tileOf(material);
+  const panelGeometry = new THREE.PlaneGeometry(size(x), depth);
+  scaleUVs(panelGeometry, [[size(x), depth]], tile);
+  const panel = new THREE.Mesh(panelGeometry, material);
   panel.rotation.x = -Math.atan2(wallY - frontY, frontZ - wallZ) - Math.PI / 2;
   panel.position.set(mid(x), (wallY + frontY) / 2, (wallZ + frontZ) / 2);
   panel.castShadow = true;
   panel.receiveShadow = true;
   group.add(panel);
 
-  const skirt = new THREE.Mesh(new THREE.PlaneGeometry(size(x), valance), material);
+  const skirtGeometry = new THREE.PlaneGeometry(size(x), valance);
+  scaleUVs(skirtGeometry, [[size(x), valance]], tile);
+  const skirt = new THREE.Mesh(skirtGeometry, material);
   skirt.position.set(mid(x), frontY - valance / 2, frontZ);
   skirt.castShadow = true;
   skirt.receiveShadow = true;

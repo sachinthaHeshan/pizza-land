@@ -2,6 +2,8 @@ export const layout = {
   units: 'meters',
 
   ground: {
+    // A base apron sits under everything so no gap of sky shows around the lot.
+    apron: { x: [-40, 40], z: [-16, 40], y: -0.2 },
     road: { x: [-40, 40], z: [14, 40], y: -0.15 },
     curb: { x: [-40, 40], z: [13.6, 14], y: [-0.15, 0] },
     sidewalk: [
@@ -119,7 +121,7 @@ export const layout = {
   },
 
   envelopes: {
-    ground: { min: [-40, -0.2, -8], max: [40, 0.1, 40] },
+    ground: { min: [-40, -0.25, -16], max: [40, 0.1, 40] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
     diningWing: { min: [-11.4, 0, -6.4], max: [-2.8, 2.9, 2.2] },
     storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.8, 3.6] },

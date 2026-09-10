@@ -5,7 +5,7 @@ function stainlessRun(materials, { x, z, height, lip, shelfY }) {
   const parts = [];
 
   parts.push(
-    box(materials.metalDark, {
+    box(materials.metal, {
       x: [x[0] + 0.04, x[1] - 0.04],
       y: [0.12, height - 0.06],
       z: [z[0] + 0.04, z[1] - 0.04],

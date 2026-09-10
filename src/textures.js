@@ -38,12 +38,13 @@ function mulberry32(seed) {
   };
 }
 
-function finish(canvas, repeat) {
+// Tiling density is carried by per-mesh UVs (see materials' userData.tile and
+// the geometry helpers), so every texture repeats exactly once per UV unit.
+function finish(canvas) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.repeat.set(repeat[0], repeat[1]);
   return texture;
 }
 
@@ -65,7 +66,7 @@ function brick(factory) {
       ctx.fillRect(c * w + offset + 3, r * h + 3, w - 6, h - 6);
     }
   }
-  return finish(canvas, [3, 3]);
+  return finish(canvas);
 }
 
 function terracotta(factory) {
@@ -83,7 +84,7 @@ function terracotta(factory) {
       ctx.fillRect(c * step + 4, r * step + 4, step - 8, step - 8);
     }
   }
-  return finish(canvas, [6, 6]);
+  return finish(canvas);
 }
 
 function wallTile(factory) {
@@ -104,7 +105,7 @@ function wallTile(factory) {
       ctx.fillRect(c * w + offset + 3, r * h + 3, w - 6, h - 6);
     }
   }
-  return finish(canvas, [4, 2]);
+  return finish(canvas);
 }
 
 function stripe(factory) {
@@ -118,7 +119,7 @@ function stripe(factory) {
     ctx.fillStyle = i % 2 === 0 ? '#d8382f' : '#f6efe4';
     ctx.fillRect(i * w, 0, w, height);
   }
-  return finish(canvas, [1, 1]);
+  return finish(canvas);
 }
 
 function wood(factory) {
@@ -138,7 +139,7 @@ function wood(factory) {
       ctx.fillRect(rng() * size, p * h + 4 + rng() * (h - 10), 40 + rng() * 90, 1.5);
     }
   }
-  return finish(canvas, [2, 2]);
+  return finish(canvas);
 }
 
 function plaster(factory) {
@@ -152,7 +153,7 @@ function plaster(factory) {
     ctx.fillStyle = jitter('#e0d2b8', 0.06, rng);
     ctx.fillRect(rng() * size, rng() * size, 2, 2);
   }
-  return finish(canvas, [3, 3]);
+  return finish(canvas);
 }
 
 function paving(factory) {
@@ -170,7 +171,7 @@ function paving(factory) {
       ctx.fillRect(c * step + 5, r * step + 5, step - 10, step - 10);
     }
   }
-  return finish(canvas, [10, 10]);
+  return finish(canvas);
 }
 
 function asphalt(factory) {
@@ -184,7 +185,7 @@ function asphalt(factory) {
     ctx.fillStyle = jitter('#565559', 0.12, rng);
     ctx.fillRect(rng() * size, rng() * size, 2, 2);
   }
-  return finish(canvas, [14, 14]);
+  return finish(canvas);
 }
 
 function metal(factory) {
@@ -198,7 +199,7 @@ function metal(factory) {
     ctx.fillStyle = jitter('#c9ced4', 0.08, rng);
     ctx.fillRect(0, rng() * size, size, 1);
   }
-  return finish(canvas, [2, 1]);
+  return finish(canvas);
 }
 
 function sign(factory) {
@@ -224,7 +225,7 @@ function sign(factory) {
     ctx.arc(cx, cy, 20, 0, Math.PI * 2);
     ctx.fill();
   }
-  return finish(canvas, [1, 1]);
+  return finish(canvas);
 }
 
 const GENERATORS = {

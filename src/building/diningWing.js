@@ -96,7 +96,7 @@ export function createDiningWing(materials, layout) {
   for (const segment of segments) {
     if (segment[1] - segment[0] <= 0.001) continue;
     group.add(
-      wallRun(materials.woodDark, {
+      wallRun(materials.wood, {
         axis: 'z',
         at: p.x,
         span: segment,
@@ -106,7 +106,7 @@ export function createDiningWing(materials, layout) {
     );
   }
   group.add(
-    wallRun(materials.woodDark, {
+    wallRun(materials.wood, {
       axis: 'z',
       at: p.x,
       span: p.door,

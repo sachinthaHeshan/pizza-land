@@ -33,6 +33,18 @@ describe('createMaterials', () => {
     expect(materials.ember).toBeInstanceOf(THREE.MeshBasicMaterial);
   });
 
+  it('declares a positive world tile size for every mapped material', () => {
+    for (const [key, material] of Object.entries(materials)) {
+      if (!material.map) continue;
+      const tile = material.userData.tile;
+      if (key === 'sign') {
+        expect(tile, key).toBeNull();
+      } else {
+        expect(tile, key).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it('maps the brick material to the brick texture', () => {
     const textures = createTextures(stubCanvasFactory());
     const m = createMaterials(textures);

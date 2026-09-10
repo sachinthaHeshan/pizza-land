@@ -6,6 +6,7 @@ export function createGround(materials, layout) {
   group.name = 'ground';
   const g = layout.ground;
 
+  group.add(slab(materials.paving, { x: g.apron.x, z: g.apron.z, y: g.apron.y }));
   group.add(slab(materials.asphalt, { x: g.road.x, z: g.road.z, y: g.road.y }));
   group.add(box(materials.stone, { x: g.curb.x, y: g.curb.y, z: g.curb.z }));
 

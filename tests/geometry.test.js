@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { box, slab, wallRun, archFrame, awning } from '../src/utils/geometry.js';
+import { box, slab, wallRun, archFrame, awning, scaleUVs } from '../src/utils/geometry.js';
 import { boundsOf, expectFinite } from './helpers/bounds.js';
 
 const mat = new THREE.MeshStandardMaterial();
@@ -17,6 +17,51 @@ describe('box', () => {
     const mesh = box(mat, { x: [0, 1], y: [0, 1], z: [0, 1] });
     expect(mesh.castShadow).toBe(true);
     expect(mesh.receiveShadow).toBe(true);
+  });
+});
+
+describe('UV world-scaling', () => {
+  const tiled = new THREE.MeshStandardMaterial();
+  tiled.userData.tile = 2;
+
+  it('gives a 4-unit face twice the UV span of a 2-unit face', () => {
+    const wide = box(tiled, { x: [0, 4], y: [0, 2], z: [0, 2] });
+    const uv = wide.geometry.attributes.uv;
+    // Face 4 is +Z: u runs along x (4 units), v along y (2 units).
+    let maxU = 0;
+    let maxV = 0;
+    for (let i = 16; i < 20; i++) {
+      maxU = Math.max(maxU, uv.getX(i));
+      maxV = Math.max(maxV, uv.getY(i));
+    }
+    expect(maxU).toBeCloseTo(4 / 2, 5);
+    expect(maxV).toBeCloseTo(2 / 2, 5);
+  });
+
+  it('leaves UVs untouched when the material declares no tile size', () => {
+    const plain = new THREE.MeshStandardMaterial();
+    plain.userData.tile = null;
+    const mesh = box(plain, { x: [0, 8], y: [0, 8], z: [0, 8] });
+    const uv = mesh.geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      expect(uv.getX(i)).toBeLessThanOrEqual(1);
+      expect(uv.getY(i)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('scales slab UVs by its footprint', () => {
+    const mesh = slab(tiled, { x: [0, 6], z: [0, 2], y: 0 });
+    const uv = mesh.geometry.attributes.uv;
+    let maxU = 0;
+    for (let i = 0; i < uv.count; i++) maxU = Math.max(maxU, uv.getX(i));
+    expect(maxU).toBeCloseTo(6 / 2, 5);
+  });
+
+  it('is a no-op without a tile size', () => {
+    const geometry = new THREE.PlaneGeometry(4, 4);
+    const before = geometry.attributes.uv.array.slice();
+    scaleUVs(geometry, [[4, 4]], null);
+    expect(Array.from(geometry.attributes.uv.array)).toEqual(Array.from(before));
   });
 });
 
