@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createFigure } from '../utils/figure.js';
+import { createFigure } from '../models/figure.js';
 
 function stanchion(materials, [x, z], b) {
   const parts = [];

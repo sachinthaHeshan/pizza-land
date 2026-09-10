@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { box } from './geometry.js';
+import { box } from '../utils/geometry.js';
 
 // A stylised low-poly person, built from boxes to match the reference art's
 // chunky cartoon proportions. Everything is expressed as a fraction of the
@@ -53,25 +53,37 @@ export function createFigure(materials, spec) {
   const hairMat = materials[hair];
   const skinMat = materials[skin];
 
+  // Limbs hang below a pivot placed at the hip or shoulder, so the simulation
+  // can swing them from the joint rather than about their own centres.
+  const limbs = {};
+
   const legHalf = u(P.legWidth) / 2;
   const legDepthHalf = u(P.legDepth) / 2;
-  for (const side of [-1, 1]) {
-    const cx = side * u(P.legSpread);
-    group.add(
+  const hipY = u(P.legTop);
+  for (const [key, side] of [['legR', -1], ['legL', 1]]) {
+    const pivot = new THREE.Group();
+    pivot.name = key;
+    pivot.position.set(side * u(P.legSpread), hipY, 0);
+
+    pivot.add(
       box(materials.denim, {
-        x: [cx - legHalf, cx + legHalf],
-        y: [u(P.shoeTop), u(P.legTop)],
+        x: [-legHalf, legHalf],
+        y: [u(P.shoeTop) - hipY, 0],
         z: [-legDepthHalf, legDepthHalf],
       })
     );
+
     const shoeHalf = u(P.shoeWidth) / 2;
-    group.add(
+    pivot.add(
       box(materials.shoe, {
-        x: [cx - shoeHalf, cx + shoeHalf],
-        y: [0, u(P.shoeTop)],
+        x: [-shoeHalf, shoeHalf],
+        y: [-hipY, u(P.shoeTop) - hipY],
         z: [-legDepthHalf, -legDepthHalf + u(P.shoeDepth)],
       })
     );
+
+    group.add(pivot);
+    limbs[key] = pivot;
   }
 
   const shoulderHalf = u(P.shoulder) / 2;
@@ -86,15 +98,22 @@ export function createFigure(materials, spec) {
 
   const armHalf = u(P.armWidth) / 2;
   const armDepthHalf = u(P.armDepth) / 2;
-  for (const side of [-1, 1]) {
-    const cx = side * (shoulderHalf + armHalf);
-    group.add(
+  const shoulderY = u(P.armTop);
+  for (const [key, side] of [['armR', -1], ['armL', 1]]) {
+    const pivot = new THREE.Group();
+    pivot.name = key;
+    pivot.position.set(side * (shoulderHalf + armHalf), shoulderY, 0);
+
+    pivot.add(
       box(clothMat, {
-        x: [cx - armHalf, cx + armHalf],
-        y: [u(P.armBottom), u(P.armTop)],
+        x: [-armHalf, armHalf],
+        y: [u(P.armBottom) - shoulderY, 0],
         z: [-armDepthHalf, armDepthHalf],
       })
     );
+
+    group.add(pivot);
+    limbs[key] = pivot;
   }
 
   const headHalf = u(P.headWidth) / 2;
@@ -142,6 +161,7 @@ export function createFigure(materials, spec) {
     }
   }
 
+  group.userData.limbs = limbs;
   group.position.set(x, 0, z);
   group.rotation.y = facing;
 
