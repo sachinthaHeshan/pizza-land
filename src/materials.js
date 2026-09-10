@@ -40,6 +40,8 @@ export const MATERIAL_KEYS = [
   'headlight',
   'clothRed',
   'pizzaBox',
+  'planting',
+  'laneCentre',
 ];
 
 // World units spanned by one full texture image. The geometry helpers scale
@@ -119,6 +121,8 @@ export function createMaterials(textures) {
     headlight: standard('headlight', { color: 0xfff0cc, roughness: 0.25, metalness: 0.0 }),
     clothRed: standard('clothRed', { color: 0xb8332c, roughness: 0.76, metalness: 0.0 }),
     pizzaBox: standard('pizzaBox', { color: 0xd8b98a, roughness: 0.85, metalness: 0.0 }),
+    planting: standard('planting', { color: 0x5c7f4a, roughness: 0.92, metalness: 0.0 }),
+    laneCentre: standard('laneCentre', { color: 0xe8d14a, roughness: 0.8, metalness: 0.0 }),
     glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a }),
     ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a }),
   };

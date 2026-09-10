@@ -3,12 +3,21 @@ export const layout = {
 
   ground: {
     // A base apron sits under everything so no gap of sky shows around the lot.
-    apron: { x: [-40, 40], z: [-16, 40], y: -0.2 },
-    road: { x: [-40, 40], z: [14, 40], y: -0.15 },
-    curb: { x: [-40, 40], z: [13.6, 14], y: [-0.15, 0] },
+    apron: { x: [-40, 40], z: [-16, 46], y: -0.2 },
+    road: { x: [-40, 40], z: [26.5, 40.5], y: -0.15 },
+    kerbs: [
+      // Sidewalk down to the parking lot.
+      { x: [-40, 40], z: [10.5, 10.9], y: [-0.15, 0] },
+      // Far side of the road.
+      { x: [-40, 40], z: [40.5, 40.9], y: [-0.15, 0] },
+    ],
     sidewalk: [
-      { x: [-40, 40], z: [8, 13.6] },
+      { x: [-40, 40], z: [8, 10.5] },
       { x: [-24, -11], z: [-8, 8] },
+      { x: [-40, 40], z: [40.9, 46] },
+      // Paving either side of the parking lot.
+      { x: [-40, -8.5], z: [10.9, 26.5] },
+      { x: [8.5, 40], z: [10.9, 26.5] },
     ],
     plaza: [
       { x: [-11, -3], z: [2, 8] },
@@ -21,9 +30,46 @@ export const layout = {
       { x: [-11, -3], z: [-8, -6] },
     ],
     diningFloor: { x: [-11, -3], z: [-6, 2], y: 0.06 },
-    floorY: { terracotta: 0.02, paving: 0.0 },
-    parking: { stripeWidth: 0.12, stripeLength: 5.0, spacing: 2.6, count: 9, startX: -13, z: [14.2, 19.2] },
-    laneDivider: { z: 22, width: 0.14, dash: 2.0, gap: 1.6, x: [-40, 40] },
+    floorY: { terracotta: 0.02, paving: 0.0, asphalt: -0.15 },
+    lanes: [
+      { z: 28.25, direction: -1 },
+      { z: 31.75, direction: -1 },
+      { z: 35.25, direction: 1 },
+      { z: 38.75, direction: 1 },
+    ],
+    laneMarks: {
+      dashed: [30.0, 37.0],
+      centre: 33.5,
+      centreGap: 0.22,
+      width: 0.14,
+      dash: 2.2,
+      gap: 1.8,
+      x: [-40, 40],
+    },
+  },
+
+  // Two rows of four bays either side of a drive aisle, fenced off from the
+  // road by a kerbed planting island with an entrance and an exit gap.
+  parking: {
+    lot: { x: [-8.5, 8.5], z: [10.9, 24.0] },
+    bayX: [-3.9, -1.3, 1.3, 3.9],
+    baySpacing: 2.6,
+    rows: [
+      { z: [11.0, 15.6], carZ: 13.3, facing: Math.PI },
+      { z: [19.4, 24.0], carZ: 21.7, facing: 0 },
+    ],
+    aisle: { z: [15.6, 19.4], centreZ: 17.5 },
+    island: { z: [24.0, 26.5], kerbHeight: 0.18, bedInset: 0.35 },
+    entrance: { x: [5.0, 8.5], centreX: 6.75 },
+    exit: { x: [-8.5, -5.0], centreX: -6.75 },
+    segments: [
+      { x: [-40, -8.5] },
+      { x: [-5.0, 5.0] },
+      { x: [8.5, 40] },
+    ],
+    walkwayX: 0,
+    lineWidth: 0.12,
+    sidewalkZ: 10.2,
   },
 
   wall: { thickness: 0.4, height: 1.2, capHeight: 0.15, capWidth: 0.55 },
@@ -139,11 +185,19 @@ export const layout = {
     serveSeconds: 2.5,
     boardSeconds: 0.8,
     speeds: { car: 7.5, walk: 1.35 },
-    lane: { z: 20.5, enterX: 40, exitX: -40 },
-    bays: [-3.9, 1.3, 6.5],
-    bayZ: 16.5,
+    lane: { z: 28.25, enterX: 45, exitX: -45 },
+    bays: [
+      { x: -3.9, z: 13.3, facing: Math.PI, row: 0 },
+      { x: -1.3, z: 13.3, facing: Math.PI, row: 0 },
+      { x: 1.3, z: 13.3, facing: Math.PI, row: 0 },
+      { x: 3.9, z: 13.3, facing: Math.PI, row: 0 },
+      { x: -3.9, z: 21.7, facing: 0, row: 1 },
+      { x: -1.3, z: 21.7, facing: 0, row: 1 },
+      { x: 1.3, z: 21.7, facing: 0, row: 1 },
+      { x: 3.9, z: 21.7, facing: 0, row: 1 },
+    ],
     car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
-    walk: { doorOffset: 1.1, curbZ: 14.6, sidewalkZ: 11.5, plazaZ: 8.6 },
+    walk: { doorOffset: 1.1, sidewalkZ: 10.2, plazaZ: 8.6 },
     stride: { frequency: 5.2, amplitude: 0.52, armScale: 0.7 },
     people: [
       { height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
@@ -167,14 +221,15 @@ export const layout = {
   },
 
   camera: {
-    frustumSize: 26,
+    frustumSize: 34,
     direction: [1, 0.82, 1],
     distance: 60,
-    target: [0, 1.2, -0.5],
+    target: [0, 1.2, 13],
   },
 
   envelopes: {
-    ground: { min: [-40, -0.25, -16], max: [40, 0.1, 40] },
+    ground: { min: [-40, -0.25, -16], max: [40, 0.1, 46] },
+    parking: { min: [-40, -0.2, 10.5], max: [40, 0.6, 26.6] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
     diningWing: { min: [-11.4, 0, -6.4], max: [-2.8, 2.9, 2.2] },
     storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.8, 3.6] },
@@ -183,6 +238,6 @@ export const layout = {
     counter: { min: [-1.2, 0, 1.3], max: [5.2, 1.2, 4.6] },
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
-    simulation: { min: [-42, 0, 2], max: [42, 2.2, 22] },
+    simulation: { min: [-46, 0, 4], max: [46, 2.2, 42] },
   },
 };
