@@ -5,6 +5,7 @@ import { createTextures } from "./textures.js";
 import { createMaterials } from "./materials.js";
 import { createShop } from "./scene.js";
 import { layout } from "./layout.js";
+import { createHorn } from "./sim/audio.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -31,7 +32,8 @@ for (const texture of Object.values(textures)) {
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 }
 const materials = createMaterials(textures);
-const shop = createShop(materials, layout);
+const horn = createHorn(() => new (window.AudioContext || window.webkitAudioContext)());
+const shop = createShop(materials, layout, { horn });
 scene.add(shop);
 
 const c = layout.camera;
@@ -83,6 +85,14 @@ function resetView() {
 }
 window.addEventListener("keydown", (event) => {
   if (event.key === "r" || event.key === "R") resetView();
+});
+
+// Browsers refuse to start audio outside a user gesture, so the horn stays
+// silent until this is clicked. The visual burst plays regardless.
+const soundButton = document.getElementById('sound');
+soundButton.addEventListener('click', () => {
+  horn.enable();
+  soundButton.hidden = true;
 });
 
 const fireLight = shop.userData.fireLight;

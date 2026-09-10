@@ -35,4 +35,18 @@ describe('main.js render loop', () => {
     expect(source).toMatch(/renderer\.render\(scene, camera\)/);
     expect(source).toMatch(/requestAnimationFrame\(animate\)/);
   });
+
+  it('builds the horn lazily behind a click', () => {
+    // The import, not just the call: matching `createHorn(` alone passes even
+    // when the import is missing, which is exactly how a ReferenceError once
+    // reached the browser with this suite green.
+    expect(source).toMatch(/import \{ createHorn \} from ["']\.\/sim\/audio\.js["']/);
+    expect(source).toMatch(/createHorn\(/);
+    expect(source).toMatch(/soundButton\.addEventListener\('click'/);
+    expect(source).toMatch(/horn\.enable\(\)/);
+  });
+
+  it('hands the horn to the scene', () => {
+    expect(source).toMatch(/createShop\(materials, layout, \{ horn \}\)/);
+  });
 });

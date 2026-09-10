@@ -12,7 +12,7 @@ import { createQueue } from './building/queue.js';
 import { createLighting } from './lighting.js';
 import { createSimulation } from './sim/simulation.js';
 
-export function createShop(materials, layout) {
+export function createShop(materials, layout, { horn } = {}) {
   const shop = new THREE.Group();
   shop.name = 'shop';
 
@@ -26,7 +26,7 @@ export function createShop(materials, layout) {
   const counter = createCounter(materials, layout);
   const sideWing = createSideWing(materials, layout);
   const queue = createQueue(materials, layout);
-  const simulation = createSimulation(materials, layout);
+  const simulation = createSimulation(materials, layout, { horn });
 
   const s = layout.storefront;
   const lighting = createLighting(layout, {

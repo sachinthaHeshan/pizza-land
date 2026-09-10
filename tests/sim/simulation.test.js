@@ -45,4 +45,23 @@ describe('createSimulation', () => {
       expect(new Set(busy).size).toBe(busy.length);
     }
   });
+
+  // This exists because the honk-and-balk behaviour was, at first, unreachable:
+  // seekers arrived too slowly to ever fill the lot, so the whole feature was
+  // dead code while every other test passed.
+  it('fills the lot and makes somebody honk over a long run', () => {
+    let honks = 0;
+    const sim = createSimulation(stubMaterials(), layout, { horn: { play: () => honks++ } });
+    let maxParked = 0;
+    let waited = false;
+    for (let t = 0; t < 480; t += 1 / 60) {
+      sim.update(1 / 60);
+      const parked = sim.traffic.vehicles.filter((v) => v.state === 'PARKED').length;
+      maxParked = Math.max(maxParked, parked);
+      if (sim.traffic.vehicles.some((v) => v.state === 'WAITING')) waited = true;
+    }
+    expect(maxParked).toBe(layout.sim.bays.length);
+    expect(waited).toBe(true);
+    expect(honks).toBeGreaterThan(0);
+  });
 });

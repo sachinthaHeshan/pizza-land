@@ -179,9 +179,10 @@ export const layout = {
   },
 
   sim: {
-    // Never more than there are queue slots, or the extra pedestrian would
-    // reach the plaza and find nowhere to stand.
-    pedestrians: 5,
+    // One per bay, so the lot itself is what fills up rather than the
+    // pedestrian pool. More pedestrians than queue slots is fine: one that
+    // finds no free slot simply waits beside its car until the queue moves.
+    pedestrians: 8,
     spawnGap: 9.0,
     respawnDelay: 2.0,
     serveSeconds: 2.5,
@@ -216,7 +217,11 @@ export const layout = {
     perLane: 6,
     spawnGap: 14,
     spawnX: 40,
-    pizzaChance: 0.18,
+    // High enough that the lot genuinely fills and cars have to wait. At the
+    // originally specced 0.18 the honking never once triggered in a ten-minute
+    // run; the lot peaked at five of eight bays. Measured: 0.6 is where it
+    // first fills, 0.7 gives regular honking and occasional balking.
+    pizzaChance: 0.7,
     follow: { minGap: 1.6, headway: 0.9, accel: 4.5, decel: 9.0 },
     laneChange: {
       changeSeconds: 1.2,
@@ -229,7 +234,7 @@ export const layout = {
     hornInterval: 1.2,
     types: [
       {
-        key: 'car', model: 'car', share: 0.62, cruise: 9.0,
+        key: 'car', model: 'car', share: 0.70, cruise: 9.0,
         length: 4.2, width: 1.8, height: 1.55, wantsPizza: true,
         colours: ['carGreen', 'carRed', 'carBlue'],
       },
@@ -239,7 +244,7 @@ export const layout = {
         colours: ['vanBody'],
       },
       {
-        key: 'bus', model: 'bus', share: 0.16, cruise: 7.0,
+        key: 'bus', model: 'bus', share: 0.08, cruise: 7.0,
         length: 9.0, width: 2.4, height: 3.0, wantsPizza: false,
         colours: ['busBody'],
       },
