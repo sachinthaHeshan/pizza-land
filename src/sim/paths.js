@@ -1,43 +1,66 @@
-// Every waypoint here is derived from layout; nothing is hard-coded. Points
-// are plain {x, z} so the simulation can interpolate them without allocating
+// Every waypoint is derived from layout; nothing is hard-coded. Points are
+// plain {x, z} so the simulation can interpolate them without allocating
 // vectors, and a `reverse` flag marks segments the car backs along.
+//
+// `bay` is always a descriptor from layout.sim.bays: { x, z, facing, row }.
 
-export function doorPosition(layout, bayX) {
-  return { x: bayX + layout.sim.walk.doorOffset, z: layout.sim.bayZ };
+export function doorPosition(layout, bay) {
+  return { x: bay.x + layout.sim.walk.doorOffset, z: bay.z };
 }
 
-export function arrivalPath(layout, bayX) {
-  const { lane, bayZ } = layout.sim;
+export function arrivalPath(layout, bay) {
+  const { lane } = layout.sim;
+  const P = layout.parking;
   return [
     { x: lane.enterX, z: lane.z },
-    { x: bayX, z: lane.z },
-    { x: bayX, z: bayZ },
+    { x: P.entrance.centreX, z: lane.z },
+    { x: P.entrance.centreX, z: P.aisle.centreZ },
+    { x: bay.x, z: P.aisle.centreZ },
+    { x: bay.x, z: bay.z },
   ];
 }
 
-export function departurePath(layout, bayX) {
-  const { lane, bayZ } = layout.sim;
+export function departurePath(layout, bay) {
+  const { lane } = layout.sim;
+  const P = layout.parking;
   return [
-    { x: bayX, z: bayZ },
-    { x: bayX, z: lane.z, reverse: true },
+    { x: bay.x, z: bay.z },
+    { x: bay.x, z: P.aisle.centreZ, reverse: true },
+    { x: P.exit.centreX, z: P.aisle.centreZ },
+    { x: P.exit.centreX, z: lane.z },
     { x: lane.exitX, z: lane.z },
   ];
 }
 
-export function walkInPath(layout, bayX, slot) {
+export function walkInPath(layout, bay, slot) {
   const { walk } = layout.sim;
-  const door = doorPosition(layout, bayX);
+  const P = layout.parking;
+  const door = doorPosition(layout, bay);
+
+  // Row 0 noses toward the shop, so its occupant walks straight out the
+  // front. Everyone else routes along the aisle to the walkway at x = 0 — a
+  // bay boundary, so it is never blocked by a parked car.
+  if (bay.row === 0) {
+    return [
+      door,
+      { x: door.x, z: walk.sidewalkZ },
+      { x: slot[0], z: walk.plazaZ },
+      { x: slot[0], z: slot[1] },
+    ];
+  }
+
   return [
     door,
-    { x: door.x, z: walk.curbZ },
-    { x: door.x, z: walk.sidewalkZ },
+    { x: door.x, z: P.aisle.centreZ },
+    { x: P.walkwayX, z: P.aisle.centreZ },
+    { x: P.walkwayX, z: walk.sidewalkZ },
     { x: slot[0], z: walk.plazaZ },
     { x: slot[0], z: slot[1] },
   ];
 }
 
-export function walkOutPath(layout, bayX, slot) {
-  return [...walkInPath(layout, bayX, slot)].reverse();
+export function walkOutPath(layout, bay, slot) {
+  return [...walkInPath(layout, bay, slot)].reverse();
 }
 
 export function pathLength(points) {

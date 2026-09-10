@@ -209,6 +209,8 @@ export function createCustomer(materials, layout, { index }) {
           if (slot === null) return;
           const target = layout.queue.slots[slot];
           const door = doorPosition(layout, bay);
+          // The turn-in easing may not have finished; square the car up.
+          car.rotation.y = bay.facing;
           figure.visible = true;
           follower.set(walkInPath(layout, bay, target));
           placeFigure(door.x, door.z, layout.queue.facing);
