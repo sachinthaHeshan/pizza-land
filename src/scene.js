@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createGround } from './building/ground.js';
+import { createParking } from './building/parking.js';
 import { createPerimeter } from './building/perimeter.js';
 import { createDiningWing } from './building/diningWing.js';
 import { createStorefront } from './building/storefront.js';
@@ -16,6 +17,7 @@ export function createShop(materials, layout) {
   shop.name = 'shop';
 
   const ground = createGround(materials, layout);
+  const parking = createParking(materials, layout);
   const perimeter = createPerimeter(materials, layout);
   const diningWing = createDiningWing(materials, layout);
   const storefront = createStorefront(materials, layout);
@@ -37,7 +39,7 @@ export function createShop(materials, layout) {
   });
 
   shop.add(
-    ground, perimeter, diningWing, storefront, kitchen, oven,
+    ground, parking, perimeter, diningWing, storefront, kitchen, oven,
     counter, sideWing, queue, simulation.group, lighting
   );
   shop.userData.fireLight = oven.userData.fireLight;

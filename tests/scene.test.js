@@ -14,6 +14,7 @@ describe('createShop', () => {
   it('assembles every part in order', () => {
     expect(shop.children.map((c) => c.name)).toEqual([
       'ground',
+      'parking',
       'perimeter',
       'diningWing',
       'storefront',
