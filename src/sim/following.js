@@ -11,3 +11,9 @@ export function safeSpeed({ gap, leaderSpeed, cruise, minGap, headway }) {
   const t = (gap - minGap) / (desiredGap - minGap);
   return Math.max(0, Math.min(cruise, leaderSpeed * (1 - t) + cruise * t));
 }
+
+// Caps this frame's travel so the bumper gap never drops below minGap.
+export function maxAdvance({ gap, speed, dt, minGap }) {
+  if (!Number.isFinite(gap)) return speed * dt;
+  return Math.max(0, Math.min(speed * dt, gap - minGap));
+}

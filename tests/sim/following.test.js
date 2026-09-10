@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeSpeed } from '../../src/sim/following.js';
+import { safeSpeed, maxAdvance } from '../../src/sim/following.js';
 
 const base = { cruise: 9, minGap: 1.6, headway: 0.9 };
 
@@ -46,5 +46,22 @@ describe('safeSpeed', () => {
 
   it('matches the leader when following nose to tail', () => {
     expect(safeSpeed({ ...base, gap: base.minGap, leaderSpeed: 5 })).toBe(0);
+  });
+});
+
+describe('maxAdvance', () => {
+  const base = { speed: 9, dt: 1 / 60, minGap: 1.6 };
+
+  it('allows a full step with no leader', () => {
+    expect(maxAdvance({ ...base, gap: Infinity })).toBeCloseTo(0.15, 5);
+  });
+
+  it('stops before the minimum gap is breached', () => {
+    expect(maxAdvance({ ...base, gap: 1.6 })).toBe(0);
+    expect(maxAdvance({ ...base, gap: 2.0 })).toBeCloseTo(0.15, 5);
+  });
+
+  it('never advances into a closed gap', () => {
+    expect(maxAdvance({ ...base, gap: 0.2 })).toBe(0);
   });
 });

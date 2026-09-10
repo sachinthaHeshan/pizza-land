@@ -61,14 +61,10 @@ export function createTraffic(materials, layout, { horn, bays, takePedestrian, r
     const active = vehicles.filter((v) => v.onRoad() && v.lane === lane);
     if (active.length >= T.perLane) return;
 
-    const rearmost = active.reduce((worst, v) => {
-      const travelled = (v.x - lane.spawnX) * lane.direction;
-      return worst === null || travelled < worst ? travelled : worst;
-    }, null);
-    if (rearmost !== null && rearmost < T.spawnGap) return;
-
     const free = vehicles.find((v) => !v.isActive());
     if (!free) return;
+    if (!laneIsClear(lane.index, lane.spawnX, T.spawnGap, free.length)) return;
+
     free.spawn(lane, lane.spawnX, rng() < T.pizzaChance);
   }
 

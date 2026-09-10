@@ -3,7 +3,7 @@ import { createCar } from '../models/car.js';
 import { createVan } from '../models/van.js';
 import { createBus } from '../models/bus.js';
 import { createHornBurst } from '../models/hornBurst.js';
-import { safeSpeed } from './following.js';
+import { safeSpeed, maxAdvance } from './following.js';
 import { lotEntryPath, lotExitPath } from './paths.js';
 
 export const VEHICLE_STATES = Object.freeze([
@@ -107,7 +107,7 @@ export function createVehicle(materials, layout, { index, type, horn }) {
   function gapToLeader(world) {
     const leader = world.leaderFor(vehicle);
     if (!leader) return { gap: Infinity, leaderSpeed: 0 };
-    const along = Math.abs(leader.x - x);
+    const along = (leader.x - x) * lane.direction;
     return { gap: along - (type.length + leader.length) / 2, leaderSpeed: leader.speed };
   }
 
@@ -121,9 +121,14 @@ export function createVehicle(materials, layout, { index, type, horn }) {
       headway: T.follow.headway,
     });
     approachSpeed(target, dt);
-    const moved = speed * dt * lane.direction;
-    x += moved;
-    rollWheels(Math.abs(moved));
+    const moved = maxAdvance({
+      gap,
+      speed,
+      dt,
+      minGap: T.follow.minGap,
+    });
+    x += moved * lane.direction;
+    rollWheels(moved);
     heading = lane.direction === -1 ? -Math.PI / 2 : Math.PI / 2;
   }
 
@@ -251,7 +256,15 @@ export function createVehicle(materials, layout, { index, type, horn }) {
           const approach =
             remaining <= 0.05 ? 0 : Math.min(type.cruise, Math.max(0.6, remaining * 0.9));
           approachSpeed(Math.min(following, approach), dt);
-          const moved = Math.min(speed * dt, Math.max(0, remaining));
+          const moved = Math.min(
+            maxAdvance({
+              gap,
+              speed,
+              dt,
+              minGap: T.follow.minGap,
+            }),
+            Math.max(0, remaining)
+          );
           x -= moved;
           rollWheels(moved);
           if (remaining <= 0.06) {

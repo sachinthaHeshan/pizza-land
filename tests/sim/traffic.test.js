@@ -38,7 +38,7 @@ describe('createTraffic', () => {
         for (let i = 1; i < inLane.length; i++) {
           const gap =
             inLane[i].x - inLane[i - 1].x - (inLane[i].length + inLane[i - 1].length) / 2;
-          expect(gap, `lane ${lane.index} overlap`).toBeGreaterThan(-0.35);
+          expect(gap, `lane ${lane.index} overlap`).toBeGreaterThanOrEqual(-0.01);
         }
       }
     });
