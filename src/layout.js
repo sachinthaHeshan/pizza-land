@@ -137,7 +137,7 @@ export const layout = {
 
   camera: {
     frustumSize: 26,
-    direction: [1, 0.82, 1],
+    direction: [0.4, 1, 0.4],
     distance: 60,
     target: [0, 1.2, -0.5],
   },
