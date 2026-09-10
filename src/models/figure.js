@@ -31,6 +31,9 @@ const P = {
   hairBottom: 0.86,
   capTop: 0.93,
   brimDepth: 0.1,
+  // Keeps stacked head parts from sharing a face in the depth buffer.
+  partGap: 0.004,
+  shellOutset: 0.003,
 };
 
 export function createFigure(materials, spec) {
@@ -118,10 +121,15 @@ export function createFigure(materials, spec) {
 
   const headHalf = u(P.headWidth) / 2;
   const headDepthHalf = u(P.headDepth) / 2;
+  const partGap = u(P.partGap);
+  const shell = u(P.shellOutset);
+  // Skin stops below the cap or hair; those sit slightly proud so they do not
+  // z-fight with the face block.
+  const skinTop = u(P.hairBottom) - partGap;
   group.add(
     box(skinMat, {
       x: [-headHalf, headHalf],
-      y: [u(P.headBottom), u(P.headTop)],
+      y: [u(P.headBottom) + partGap, skinTop],
       z: [-headDepthHalf, headDepthHalf],
     })
   );
@@ -129,9 +137,9 @@ export function createFigure(materials, spec) {
   if (cap) {
     group.add(
       box(clothMat, {
-        x: [-headHalf - 0.005, headHalf + 0.005],
+        x: [-headHalf - shell, headHalf + shell],
         y: [u(P.hairBottom), u(P.capTop)],
-        z: [-headDepthHalf, headDepthHalf],
+        z: [-headDepthHalf - shell, headDepthHalf + shell],
       })
     );
     // Brim points the way the figure faces.
@@ -139,15 +147,15 @@ export function createFigure(materials, spec) {
       box(clothMat, {
         x: [-headHalf * 0.9, headHalf * 0.9],
         y: [u(P.hairBottom), u(P.hairBottom) + u(0.018)],
-        z: [headDepthHalf, headDepthHalf + u(P.brimDepth)],
+        z: [headDepthHalf + partGap, headDepthHalf + u(P.brimDepth)],
       })
     );
   } else {
     group.add(
       box(hairMat, {
-        x: [-headHalf - 0.005, headHalf + 0.005],
+        x: [-headHalf - shell, headHalf + shell],
         y: [u(P.hairBottom), u(P.hairTop)],
-        z: [-headDepthHalf - 0.005, headDepthHalf + 0.005],
+        z: [-headDepthHalf - shell, headDepthHalf + shell],
       })
     );
     if (longHair) {
