@@ -1,5 +1,8 @@
 export const layout = {
   units: 'meters',
+  // Small lifts that keep coplanar surfaces from fighting in the depth buffer.
+  surfaceEps: 0.02,
+  floorContact: 0.01,
 
   ground: {
     // A base apron sits under everything so no gap of sky shows around the lot.
@@ -77,8 +80,8 @@ export const layout = {
   perimeter: {
     runs: [
       { axis: 'x', z: -8, x: [-11, 9] },
-      { axis: 'z', x: 9, z: [-8, 2] },
-      { axis: 'z', x: -11, z: [-8, -6] },
+      // Stop short of the side wing so the two east faces do not share a seam.
+      { axis: 'z', x: 9, z: [-8, 1.98] },
     ],
     pillars: [[-11, -8], [9, -8], [9, 6], [-11, 2]],
     pillarSize: 0.7,
@@ -98,7 +101,7 @@ export const layout = {
     plinthHeight: 1.1,
     wallHeight: 2.8,
     thickness: 0.3,
-    west: { x: -11, z: [-6, 2] },
+    west: { x: -11, z: [-8, 2] },
     north: { z: -6, x: [-11, -3] },
     partition: { x: -3, z: [-6, 2], door: [-1, 0.2], lintelY: 2.1 },
     windows: { sill: 1.1, head: 2.6, bays: [[-5.3, -3.1], [-2.1, 0.1]] },
@@ -276,7 +279,7 @@ export const layout = {
     ground: { min: [-52, -0.25, -16], max: [52, 0.1, 46] },
     parking: { min: [-52, -0.2, 10.5], max: [52, 0.6, 26.6] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
-    diningWing: { min: [-11.4, 0, -6.4], max: [-2.8, 2.9, 2.2] },
+    diningWing: { min: [-11.4, 0, -8.4], max: [-2.8, 2.9, 2.2] },
     storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.8, 3.6] },
     kitchen: { min: [-3.2, 0, -8.2], max: [6.2, 3.3, -3.5] },
     oven: { min: [5.4, 0, -6.6], max: [9.0, 5.1, -3.0] },

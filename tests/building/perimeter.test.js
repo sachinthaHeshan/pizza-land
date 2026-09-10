@@ -29,8 +29,8 @@ describe('createPerimeter', () => {
     expect(layout.perimeter.pillarHeight).toBeGreaterThan(layout.wall.height);
   });
 
-  it('leaves the left wall short so the dining wing owns its own face', () => {
+  it('leaves the west face to the dining wing', () => {
     const left = layout.perimeter.runs.find((r) => r.axis === 'z' && r.x === -11);
-    expect(left.z[1]).toBeLessThanOrEqual(layout.diningWing.footprint.z[0]);
+    expect(left).toBeUndefined();
   });
 });

@@ -79,7 +79,14 @@ export function createMaterials(textures) {
     plaster: standard('plaster', { map: textures.plaster, roughness: 0.95, metalness: 0.0 }),
     paving: standard('paving', { map: textures.paving, roughness: 0.9, metalness: 0.02 }),
     asphalt: standard('asphalt', { map: textures.asphalt, roughness: 0.97, metalness: 0.0 }),
-    roadPaint: standard('roadPaint', { color: 0xf2efe6, roughness: 0.8, metalness: 0.0 }),
+    roadPaint: standard('roadPaint', {
+      color: 0xf2efe6,
+      roughness: 0.8,
+      metalness: 0.0,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    }),
     metal: standard('metal', { map: textures.metal, roughness: 0.32, metalness: 0.82 }),
     metalDark: standard('metalDark', { color: 0x777d85, roughness: 0.45, metalness: 0.7 }),
     glass: standard('glass', {
@@ -124,13 +131,27 @@ export function createMaterials(textures) {
     headlight: standard('headlight', { color: 0xfff0cc, roughness: 0.25, metalness: 0.0 }),
     clothRed: standard('clothRed', { color: 0xb8332c, roughness: 0.76, metalness: 0.0 }),
     pizzaBox: standard('pizzaBox', { color: 0xd8b98a, roughness: 0.85, metalness: 0.0 }),
-    planting: standard('planting', { color: 0x5c7f4a, roughness: 0.92, metalness: 0.0 }),
-    laneCentre: standard('laneCentre', { color: 0xe8d14a, roughness: 0.8, metalness: 0.0 }),
+    planting: standard('planting', {
+      color: 0x5c7f4a,
+      roughness: 0.92,
+      metalness: 0.0,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    }),
+    laneCentre: standard('laneCentre', {
+      color: 0xe8d14a,
+      roughness: 0.8,
+      metalness: 0.0,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    }),
     busBody: standard('busBody', { color: 0xc9843a, roughness: 0.42, metalness: 0.2 }),
     vanBody: standard('vanBody', { color: 0xe4e1d8, roughness: 0.45, metalness: 0.18 }),
-    horn: new THREE.MeshBasicMaterial({ name: 'horn', color: 0xffd66b }),
-    glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a }),
-    ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a }),
+    horn: new THREE.MeshBasicMaterial({ name: 'horn', color: 0xffd66b, depthWrite: false }),
+    glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a, depthWrite: false }),
+    ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a, depthWrite: false }),
   };
 
   for (const [key, material] of Object.entries(materials)) {

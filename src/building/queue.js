@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { createFigure } from '../models/figure.js';
 
-function stanchion(materials, [x, z], b) {
+function stanchion(materials, layout, [x, z], b) {
   const parts = [];
 
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(b.baseRadius, b.baseRadius * 1.05, b.baseHeight, 20),
     materials.metalDark
   );
-  base.position.set(x, b.baseHeight / 2, z);
+  base.position.set(x, layout.floorContact + b.baseHeight / 2, z);
   base.castShadow = true;
   base.receiveShadow = true;
   parts.push(base);
@@ -17,7 +17,11 @@ function stanchion(materials, [x, z], b) {
     new THREE.CylinderGeometry(b.postRadius, b.postRadius, b.height - b.baseHeight, 16),
     materials.metalDark
   );
-  post.position.set(x, b.baseHeight + (b.height - b.baseHeight) / 2, z);
+  post.position.set(
+    x,
+    layout.floorContact + b.baseHeight + (b.height - b.baseHeight) / 2,
+    z
+  );
   post.castShadow = true;
   post.receiveShadow = true;
   parts.push(post);
@@ -49,7 +53,7 @@ export function createQueue(materials, layout) {
   const b = q.barrier;
 
   for (const position of b.posts) {
-    for (const part of stanchion(materials, position, b)) group.add(part);
+    for (const part of stanchion(materials, layout, position, b)) group.add(part);
   }
   for (let i = 0; i < b.posts.length - 1; i++) {
     group.add(rope(materials, b.posts[i], b.posts[i + 1], b));

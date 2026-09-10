@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { box, wallRun, awning } from '../utils/geometry.js';
+import { box, wallRun, awning, yOnFloor } from '../utils/geometry.js';
 
 export function createSideWing(materials, layout) {
   const group = new THREE.Group();
@@ -7,6 +7,7 @@ export function createSideWing(materials, layout) {
   const s = layout.sideWing;
   const t = s.thickness;
   const w = s.window;
+  const plinthY = yOnFloor([0, s.plinthHeight - layout.surfaceEps], layout.floorContact);
 
   // East face: solid.
   group.add(
@@ -14,7 +15,7 @@ export function createSideWing(materials, layout) {
       axis: 'z',
       at: s.footprint.x[1],
       span: s.footprint.z,
-      y: [0, s.plinthHeight],
+      y: plinthY,
       thickness: t,
     })
   );
@@ -37,7 +38,7 @@ export function createSideWing(materials, layout) {
       axis: 'x',
       at: w.z,
       span: s.footprint.x,
-      y: [0, s.plinthHeight],
+      y: plinthY,
       thickness: t,
     })
   );
@@ -70,13 +71,13 @@ export function createSideWing(materials, layout) {
       z: [w.z - 0.03, w.z + 0.03],
     })
   );
-  group.add(
-    box(materials.glow, {
-      x: [bay[0] + 0.08, bay[1] - 0.08],
-      y: [w.sill + 0.08, head - 0.08],
-      z: [w.z - 0.14, w.z - 0.11],
-    })
-  );
+  const glow = box(materials.glow, {
+    x: [bay[0] + 0.08, bay[1] - 0.08],
+    y: [w.sill + 0.08, head - 0.08],
+    z: [w.z - 0.16, w.z - 0.13],
+  });
+  glow.renderOrder = 2;
+  group.add(glow);
   group.add(
     box(materials.greenPaint, {
       x: [bay[0] - 0.08, bay[1] + 0.08],

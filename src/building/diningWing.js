@@ -1,11 +1,14 @@
 import * as THREE from 'three';
-import { box, wallRun } from '../utils/geometry.js';
+import { box, wallRun, yOnFloor } from '../utils/geometry.js';
 
 export function createDiningWing(materials, layout) {
   const group = new THREE.Group();
   group.name = 'diningWing';
   const d = layout.diningWing;
   const t = d.thickness;
+  const floor = layout.floorContact;
+  const plinthY = yOnFloor([0, d.plinthHeight - layout.surfaceEps], floor);
+  const partitionY = yOnFloor([0, d.wallHeight], floor);
 
   // West wall: continuous plinth, header band, and piers around the window bays.
   const west = d.west;
@@ -14,7 +17,7 @@ export function createDiningWing(materials, layout) {
       axis: 'z',
       at: west.x,
       span: west.z,
-      y: [0, d.plinthHeight],
+      y: plinthY,
       thickness: t,
     })
   );
@@ -73,7 +76,7 @@ export function createDiningWing(materials, layout) {
       axis: 'x',
       at: d.north.z,
       span: d.north.x,
-      y: [0, d.plinthHeight],
+      y: plinthY,
       thickness: t,
     })
   );
@@ -100,7 +103,7 @@ export function createDiningWing(materials, layout) {
         axis: 'z',
         at: p.x,
         span: segment,
-        y: [0, d.wallHeight],
+        y: partitionY,
         thickness: t,
       })
     );

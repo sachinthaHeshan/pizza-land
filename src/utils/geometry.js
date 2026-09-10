@@ -3,6 +3,11 @@ import * as THREE from 'three';
 const mid = (range) => (range[0] + range[1]) / 2;
 const size = (range) => range[1] - range[0];
 
+// Lifts ranges that sit on the ground plane so bottoms do not z-fight paving.
+export function yOnFloor(y, contact = 0.01) {
+  return y[0] <= 0 ? [contact, y[1]] : y;
+}
+
 function tileOf(material) {
   const tile = material && material.userData ? material.userData.tile : null;
   return typeof tile === 'number' && tile > 0 ? tile : null;
@@ -44,7 +49,7 @@ export function box(material, { x, y, z }) {
   return mesh;
 }
 
-export function slab(material, { x, z, y = 0 }) {
+export function slab(material, { x, z, y = 0, renderOrder = 0 }) {
   const geometry = new THREE.PlaneGeometry(size(x), size(z));
   scaleUVs(geometry, [[size(x), size(z)]], tileOf(material));
   const mesh = new THREE.Mesh(geometry, material);
@@ -52,6 +57,7 @@ export function slab(material, { x, z, y = 0 }) {
   mesh.position.set(mid(x), y, mid(z));
   mesh.castShadow = false;
   mesh.receiveShadow = true;
+  mesh.renderOrder = renderOrder;
   return mesh;
 }
 

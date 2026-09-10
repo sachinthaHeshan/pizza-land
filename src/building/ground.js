@@ -9,6 +9,7 @@ function dashedLine(group, materials, { x, z, width, dash, gap, y }) {
         x: [cursor, Math.min(cursor + dash, x[1])],
         z: [z, z + width],
         y,
+        renderOrder: 1,
       })
     );
   }
@@ -23,7 +24,13 @@ export function createGround(materials, layout) {
   group.add(slab(materials.asphalt, { x: g.road.x, z: g.road.z, y: g.road.y }));
 
   for (const kerb of g.kerbs) {
-    group.add(box(materials.stone, { x: kerb.x, y: kerb.y, z: kerb.z }));
+    group.add(
+      box(materials.stone, {
+        x: kerb.x,
+        y: [kerb.y[0] + layout.surfaceEps / 2, kerb.y[1]],
+        z: kerb.z,
+      })
+    );
   }
   for (const rect of g.sidewalk) {
     group.add(slab(materials.paving, { x: rect.x, z: rect.z, y: g.floorY.paving }));
@@ -39,7 +46,7 @@ export function createGround(materials, layout) {
   );
 
   const marks = g.laneMarks;
-  const paintY = g.road.y + 0.01;
+  const paintY = g.road.y + layout.surfaceEps;
 
   for (const z of marks.dashed) {
     dashedLine(group, materials, {
@@ -59,6 +66,7 @@ export function createGround(materials, layout) {
         x: marks.x,
         z: [marks.centre + offset, marks.centre + offset + marks.width],
         y: paintY,
+        renderOrder: 1,
       })
     );
   }

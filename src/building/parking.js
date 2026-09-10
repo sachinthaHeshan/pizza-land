@@ -23,7 +23,8 @@ export function createParking(materials, layout) {
         slab(materials.roadPaint, {
           x: [edge - P.lineWidth / 2, edge + P.lineWidth / 2],
           z: row.z,
-          y: asphaltY + 0.01,
+          y: asphaltY + layout.surfaceEps,
+          renderOrder: 1,
         })
       );
     }
@@ -35,7 +36,7 @@ export function createParking(materials, layout) {
     group.add(
       box(materials.stone, {
         x: segment.x,
-        y: [asphaltY, asphaltY + P.island.kerbHeight],
+        y: [asphaltY + layout.surfaceEps / 2, asphaltY + P.island.kerbHeight],
         z: P.island.z,
       })
     );
@@ -43,7 +44,8 @@ export function createParking(materials, layout) {
       slab(materials.planting, {
         x: [segment.x[0] + inset, segment.x[1] - inset],
         z: [P.island.z[0] + inset, P.island.z[1] - inset],
-        y: asphaltY + P.island.kerbHeight + 0.01,
+        y: asphaltY + P.island.kerbHeight + layout.surfaceEps,
+        renderOrder: 1,
       })
     );
   }

@@ -1,22 +1,35 @@
 import * as THREE from 'three';
-import { box, wallRun, awning } from '../utils/geometry.js';
+import { box, wallRun, awning, yOnFloor } from '../utils/geometry.js';
 
 export function createStorefront(materials, layout) {
   const group = new THREE.Group();
   group.name = 'storefront';
   const s = layout.storefront;
   const t = s.thickness;
+  const halfPost = s.postSize / 2;
+  const plinthY = yOnFloor(s.plinth, layout.floorContact);
 
-  // Brick plinth and header beam run the full facade.
-  group.add(
-    wallRun(materials.brick, {
-      axis: 'x',
-      at: s.z,
-      span: s.x,
-      y: s.plinth,
-      thickness: t,
-    })
-  );
+  // Brick plinth runs between posts so it is not meshed twice under each post.
+  const plinthSpans = [
+    [s.x[0], s.posts[0] - halfPost],
+    ...s.posts.slice(0, -1).map((post, index) => [
+      post + halfPost,
+      s.posts[index + 1] - halfPost,
+    ]),
+    [s.posts[s.posts.length - 1] + halfPost, s.x[1]],
+  ];
+  for (const span of plinthSpans) {
+    if (span[1] - span[0] <= 0.001) continue;
+    group.add(
+      wallRun(materials.brick, {
+        axis: 'x',
+        at: s.z,
+        span,
+        y: plinthY,
+        thickness: t,
+      })
+    );
+  }
   group.add(
     wallRun(materials.greenPaint, {
       axis: 'x',
@@ -28,12 +41,12 @@ export function createStorefront(materials, layout) {
   );
 
   // Timber posts.
-  const halfPost = s.postSize / 2;
+  const postY = yOnFloor([0, s.header[1]], layout.floorContact);
   for (const px of s.posts) {
     group.add(
       box(materials.greenPaint, {
         x: [px - halfPost, px + halfPost],
-        y: [0, s.header[1]],
+        y: postY,
         z: [s.z - t / 2 - 0.04, s.z + t / 2 + 0.04],
       })
     );
@@ -54,26 +67,26 @@ export function createStorefront(materials, layout) {
         z: [s.z - 0.03, s.z + 0.03],
       })
     );
-    group.add(
-      box(materials.glow, {
-        x: [bay[0] + 0.06, bay[1] - 0.06],
-        y: [glassBottom + 0.06, s.glass[1] - 0.06],
-        z: [s.z - 0.12, s.z - 0.09],
-      })
-    );
+    const glow = box(materials.glow, {
+      x: [bay[0] + 0.06, bay[1] - 0.06],
+      y: [glassBottom + 0.06, s.glass[1] - 0.06],
+      z: [s.z - 0.14, s.z - 0.11],
+    });
+    glow.renderOrder = 2;
+    group.add(glow);
 
     if (isDoor) {
       group.add(
         box(materials.greenPaint, {
           x: [bay[0] - 0.06, bay[0] + 0.06],
-          y: [0, s.glass[1] + 0.12],
+          y: postY,
           z: [s.z - 0.09, s.z + 0.09],
         })
       );
       group.add(
         box(materials.greenPaint, {
           x: [bay[1] - 0.06, bay[1] + 0.06],
-          y: [0, s.glass[1] + 0.12],
+          y: postY,
           z: [s.z - 0.09, s.z + 0.09],
         })
       );
