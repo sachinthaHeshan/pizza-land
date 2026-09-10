@@ -32,6 +32,14 @@ export const MATERIAL_KEYS = [
   'clothGreen',
   'clothYellow',
   'clothBlue',
+  'carGreen',
+  'carRed',
+  'carBlue',
+  'carGlass',
+  'tyre',
+  'headlight',
+  'clothRed',
+  'pizzaBox',
 ];
 
 // World units spanned by one full texture image. The geometry helpers scale
@@ -97,6 +105,20 @@ export function createMaterials(textures) {
     clothGreen: standard('clothGreen', { color: 0x3f7a46, roughness: 0.76, metalness: 0.0 }),
     clothYellow: standard('clothYellow', { color: 0xe8c552, roughness: 0.76, metalness: 0.0 }),
     clothBlue: standard('clothBlue', { color: 0x3d6fa8, roughness: 0.76, metalness: 0.0 }),
+    carGreen: standard('carGreen', { color: 0x6f9463, roughness: 0.38, metalness: 0.25 }),
+    carRed: standard('carRed', { color: 0xb8443c, roughness: 0.38, metalness: 0.25 }),
+    carBlue: standard('carBlue', { color: 0x3f6ca8, roughness: 0.38, metalness: 0.25 }),
+    carGlass: standard('carGlass', {
+      color: 0x2c3a45,
+      roughness: 0.12,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.72,
+    }),
+    tyre: standard('tyre', { color: 0x24262a, roughness: 0.9, metalness: 0.0 }),
+    headlight: standard('headlight', { color: 0xfff0cc, roughness: 0.25, metalness: 0.0 }),
+    clothRed: standard('clothRed', { color: 0xb8332c, roughness: 0.76, metalness: 0.0 }),
+    pizzaBox: standard('pizzaBox', { color: 0xd8b98a, roughness: 0.85, metalness: 0.0 }),
     glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a }),
     ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a }),
   };

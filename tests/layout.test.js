@@ -45,3 +45,41 @@ describe('layout', () => {
     }
   });
 });
+
+describe('layout.sim', () => {
+  it('gives every customer a parking bay', () => {
+    expect(layout.sim.bays.length).toBeGreaterThanOrEqual(layout.sim.customers);
+  });
+
+  it('has more queue slots than customers so the line never overflows', () => {
+    expect(layout.queue.slots.length).toBeGreaterThanOrEqual(layout.sim.customers);
+  });
+
+  it('orders queue slots front to back, away from the counter', () => {
+    const slots = layout.queue.slots;
+    for (let i = 1; i < slots.length; i++) {
+      expect(slots[i][1]).toBeGreaterThan(slots[i - 1][1]);
+    }
+    expect(slots[0][1]).toBeGreaterThan(layout.counter.main.z[1]);
+  });
+
+  it('keeps parked cars clear of the kerb and the travel lane', () => {
+    const half = layout.sim.car.length / 2;
+    expect(layout.sim.bayZ - half).toBeGreaterThan(layout.ground.curb.z[1]);
+    expect(layout.sim.bayZ + half).toBeLessThan(layout.sim.lane.z);
+  });
+
+  it('puts every parking bay on the road', () => {
+    for (const bay of layout.sim.bays) {
+      expect(bay).toBeGreaterThan(layout.ground.road.x[0]);
+      expect(bay).toBeLessThan(layout.ground.road.x[1]);
+    }
+  });
+
+  it('gives every speed and dwell a positive value', () => {
+    const { speeds, serveSeconds, boardSeconds, spawnGap } = layout.sim;
+    for (const v of [speeds.car, speeds.walk, serveSeconds, boardSeconds, spawnGap]) {
+      expect(v).toBeGreaterThan(0);
+    }
+  });
+});

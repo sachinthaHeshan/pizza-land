@@ -100,7 +100,8 @@ export const layout = {
   },
 
   // The queue forms on the plaza off the counter's customer side (+Z) and is
-  // fenced by a stanchion-and-rope lane, as in the reference.
+  // fenced by a stanchion-and-rope lane, as in the reference. `people` is
+  // removed in Task 8, once the simulation owns who stands here.
   queue: {
     facing: Math.PI,
     barrier: {
@@ -118,6 +119,43 @@ export const layout = {
       { x: -0.1, z: 6.5, height: 1.28, cloth: 'clothGreen', hair: 'hairLight', skin: 'skin' },
       { x: -0.7, z: 7.1, height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
       { x: -1.3, z: 7.7, height: 1.3, cloth: 'clothOrange', hair: 'hairDark', skin: 'skin', cap: true },
+    ],
+    slots: [
+      [1.2, 5.1],
+      [0.5, 5.9],
+      [-0.1, 6.5],
+      [-0.7, 7.1],
+      [-1.3, 7.7],
+    ],
+    cashier: {
+      x: 2.0,
+      z: 3.0,
+      facing: 0,
+      height: 1.66,
+      cloth: 'clothRed',
+      hair: 'hairDark',
+      skin: 'skin',
+      cap: true,
+    },
+  },
+
+  sim: {
+    customers: 3,
+    spawnGap: 9.0,
+    respawnDelay: 2.0,
+    serveSeconds: 2.5,
+    boardSeconds: 0.8,
+    speeds: { car: 7.5, walk: 1.35 },
+    lane: { z: 20.5, enterX: 40, exitX: -40 },
+    bays: [-11.7, -6.5, -1.3],
+    bayZ: 16.5,
+    car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
+    walk: { doorOffset: 1.1, curbZ: 14.6, sidewalkZ: 11.5, plazaZ: 8.6 },
+    stride: { frequency: 5.2, amplitude: 0.52, armScale: 0.7 },
+    people: [
+      { height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
+      { height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
+      { height: 1.62, cloth: 'clothYellow', hair: 'hairLight', skin: 'skin', longHair: true },
     ],
   },
 
@@ -152,5 +190,6 @@ export const layout = {
     counter: { min: [-1.2, 0, 1.3], max: [5.2, 1.2, 4.6] },
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
+    simulation: { min: [-42, 0, 2], max: [42, 2.2, 22] },
   },
 };
