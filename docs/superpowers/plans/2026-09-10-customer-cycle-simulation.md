@@ -18,7 +18,7 @@
 - Simulation modules must not import `three` for anything but `Vector3`, `Group` and `MathUtils` — no renderer, no loader.
 - Customers are hidden, never disposed. The same three agents are reused for the life of the page.
 - Timing, verbatim from the spec: 3 customers, spawn gap 9.0 s, car speed 7.5 units/s, walk speed 1.35 units/s, serve dwell 2.5 s, board dwell 0.8 s.
-- Bays centred at `x = -11.7, -6.5, -1.3`; bay stop `z = 16.5`; travel lane `z = 20.5`; enter `x = 40`; exit `x = -40`.
+- Bays centred at `x = -3.9, 1.3, 6.5`; bay stop `z = 16.5`; travel lane `z = 20.5`; enter `x = 40`; exit `x = -40`.
 - Queue slots front to back: `(1.2, 5.1) (0.5, 5.9) (-0.1, 6.5) (-0.7, 7.1) (-1.3, 7.7)`.
 - Car is 4.2 long, 1.8 wide, so a parked car spans `z 14.4 -> 18.6`.
 
@@ -325,7 +325,7 @@ In `src/layout.js`, replace the whole `queue:` block with:
     boardSeconds: 0.8,
     speeds: { car: 7.5, walk: 1.35 },
     lane: { z: 20.5, enterX: 40, exitX: -40 },
-    bays: [-11.7, -6.5, -1.3],
+    bays: [-3.9, 1.3, 6.5],
     bayZ: 16.5,
     car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
     walk: { doorOffset: 1.1, curbZ: 14.6, sidewalkZ: 11.5, plazaZ: 8.6 },

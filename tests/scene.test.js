@@ -22,6 +22,7 @@ describe('createShop', () => {
       'counter',
       'sideWing',
       'queue',
+      'simulation',
       'lighting',
     ]);
   });
@@ -37,6 +38,16 @@ describe('createShop', () => {
   it('builds no roof above the tallest wall except the chimney', () => {
     const chimneyTop = layout.oven.flue.y[1] + 0.1;
     expect(boundsOf(shop).max.y).toBeLessThanOrEqual(chimneyTop + 0.01);
+  });
+
+  it('exposes the simulation for the render loop', () => {
+    expect(shop.userData.simulation).toBeTruthy();
+    expect(typeof shop.userData.simulation.update).toBe('function');
+  });
+
+  it('advances without throwing', () => {
+    for (let t = 0; t < 60; t += 1 / 60) shop.userData.simulation.update(1 / 60);
+    expect(shop.userData.simulation.customers).toHaveLength(layout.sim.customers);
   });
 
   it('keeps every part inside the lot plus its street apron', () => {

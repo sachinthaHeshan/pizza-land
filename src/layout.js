@@ -140,7 +140,7 @@ export const layout = {
     boardSeconds: 0.8,
     speeds: { car: 7.5, walk: 1.35 },
     lane: { z: 20.5, enterX: 40, exitX: -40 },
-    bays: [-11.7, -6.5, -1.3],
+    bays: [-3.9, 1.3, 6.5],
     bayZ: 16.5,
     car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
     walk: { doorOffset: 1.1, curbZ: 14.6, sidewalkZ: 11.5, plazaZ: 8.6 },
@@ -168,7 +168,7 @@ export const layout = {
 
   camera: {
     frustumSize: 26,
-    direction: [0.4, 1, 0.4],
+    direction: [1, 0.82, 1],
     distance: 60,
     target: [0, 1.2, -0.5],
   },

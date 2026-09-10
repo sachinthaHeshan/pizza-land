@@ -59,8 +59,9 @@ in the simulation modules.
 
 **Driving.** Arrival waypoints are `(40, 20.5) -> (bayX, 20.5) -> (bayX,
 16.5)`, leaving the car stopped nose-to-kerb. Departure is `(bayX, 16.5) ->
-(bayX, 20.5) -> (-40, 20.5)`. Three bays are used, centred at `x = -11.7`,
-`-6.5`, `-1.3`.
+(bayX, 20.5) -> (-40, 20.5)`. Three bays are used, centred at `x = -3.9`, `1.3`
+and `6.5` — stripe boundaries chosen so parked cars sit inside the camera
+frame. Bays further left park off-screen.
 
 The car's heading follows its velocity except on the first departure segment,
 which is flagged `reverse: true` — the car is parked nose-in, so it backs out

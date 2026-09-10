@@ -9,6 +9,7 @@ import { createCounter } from './building/counter.js';
 import { createSideWing } from './building/sideWing.js';
 import { createQueue } from './building/queue.js';
 import { createLighting } from './lighting.js';
+import { createSimulation } from './sim/simulation.js';
 
 export function createShop(materials, layout) {
   const shop = new THREE.Group();
@@ -23,6 +24,7 @@ export function createShop(materials, layout) {
   const counter = createCounter(materials, layout);
   const sideWing = createSideWing(materials, layout);
   const queue = createQueue(materials, layout);
+  const simulation = createSimulation(materials, layout);
 
   const s = layout.storefront;
   const lighting = createLighting(layout, {
@@ -34,8 +36,12 @@ export function createShop(materials, layout) {
     sideWindow: sideWing.userData.windowAnchor,
   });
 
-  shop.add(ground, perimeter, diningWing, storefront, kitchen, oven, counter, sideWing, queue, lighting);
+  shop.add(
+    ground, perimeter, diningWing, storefront, kitchen, oven,
+    counter, sideWing, queue, simulation.group, lighting
+  );
   shop.userData.fireLight = oven.userData.fireLight;
+  shop.userData.simulation = simulation;
 
   return shop;
 }
