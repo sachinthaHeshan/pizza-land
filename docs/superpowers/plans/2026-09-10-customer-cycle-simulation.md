@@ -948,16 +948,17 @@ import { createPool } from '../../src/sim/pool.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
 
-// A lone customer, so no other agent ever holds a slot.
+// Hands out slot 1 as if someone were already at the counter, then reports
+// every slot free — so a lone customer still exercises QUEUEING and the
+// shuffle forward into slot 0. Returning 0 here would skip QUEUEING entirely.
 function world() {
   return {
     bays: createPool(layout.sim.bays),
-    held: null,
-    isSlotFree(i) {
-      return this.held !== i;
+    isSlotFree() {
+      return true;
     },
     firstFreeSlot() {
-      return 0;
+      return 1;
     },
   };
 }
