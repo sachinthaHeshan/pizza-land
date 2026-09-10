@@ -3,21 +3,21 @@ export const layout = {
 
   ground: {
     // A base apron sits under everything so no gap of sky shows around the lot.
-    apron: { x: [-40, 40], z: [-16, 46], y: -0.2 },
-    road: { x: [-40, 40], z: [26.5, 40.5], y: -0.15 },
+    apron: { x: [-52, 52], z: [-16, 46], y: -0.2 },
+    road: { x: [-52, 52], z: [26.5, 40.5], y: -0.15 },
     kerbs: [
       // Sidewalk down to the parking lot.
-      { x: [-40, 40], z: [10.5, 10.9], y: [-0.15, 0] },
+      { x: [-52, 52], z: [10.5, 10.9], y: [-0.15, 0] },
       // Far side of the road.
-      { x: [-40, 40], z: [40.5, 40.9], y: [-0.15, 0] },
+      { x: [-52, 52], z: [40.5, 40.9], y: [-0.15, 0] },
     ],
     sidewalk: [
-      { x: [-40, 40], z: [8, 10.5] },
+      { x: [-52, 52], z: [8, 10.5] },
       { x: [-24, -11], z: [-8, 8] },
-      { x: [-40, 40], z: [40.9, 46] },
+      { x: [-52, 52], z: [40.9, 46] },
       // Paving either side of the parking lot.
-      { x: [-40, -8.5], z: [10.9, 26.5] },
-      { x: [8.5, 40], z: [10.9, 26.5] },
+      { x: [-52, -8.5], z: [10.9, 26.5] },
+      { x: [8.5, 52], z: [10.9, 26.5] },
     ],
     plaza: [
       { x: [-11, -3], z: [2, 8] },
@@ -44,7 +44,7 @@ export const layout = {
       width: 0.14,
       dash: 2.2,
       gap: 1.8,
-      x: [-40, 40],
+      x: [-52, 52],
     },
   },
 
@@ -63,9 +63,9 @@ export const layout = {
     entrance: { x: [5.0, 8.5], centreX: 6.75 },
     exit: { x: [-8.5, -5.0], centreX: -6.75 },
     segments: [
-      { x: [-40, -8.5] },
+      { x: [-52, -8.5] },
       { x: [-5.0, 5.0] },
-      { x: [8.5, 40] },
+      { x: [8.5, 52] },
     ],
     walkwayX: 0,
     lineWidth: 0.12,
@@ -222,7 +222,8 @@ export const layout = {
       changeSeconds: 1.2,
       mergeDistance: 26,
       overtakeGap: 9,
-      changeClearance: 7,
+      // A bumper-to-bumper gap, not centre-to-centre.
+      changeClearance: 4,
     },
     waitSeconds: 10,
     hornInterval: 1.2,
@@ -267,8 +268,8 @@ export const layout = {
   },
 
   envelopes: {
-    ground: { min: [-40, -0.25, -16], max: [40, 0.1, 46] },
-    parking: { min: [-40, -0.2, 10.5], max: [40, 0.6, 26.6] },
+    ground: { min: [-52, -0.25, -16], max: [52, 0.1, 46] },
+    parking: { min: [-52, -0.2, 10.5], max: [52, 0.6, 26.6] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
     diningWing: { min: [-11.4, 0, -6.4], max: [-2.8, 2.9, 2.2] },
     storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.8, 3.6] },
@@ -278,6 +279,6 @@ export const layout = {
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
     simulation: { min: [-46, 0, 4], max: [46, 2.2, 42] },
-    traffic: { min: [-46, 0, 25], max: [46, 3.4, 42] },
+    traffic: { min: [-52, 0, 25], max: [52, 3.4, 42] },
   },
 };

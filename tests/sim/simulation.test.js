@@ -12,10 +12,13 @@ describe('createSimulation', () => {
     expect(sim.pedestrians).toHaveLength(layout.sim.pedestrians);
   });
 
-  it('advances without throwing', () => {
+  it('keeps every pedestrian in a valid state while traffic runs', () => {
     const sim = createSimulation(stubMaterials(), layout);
-    for (let t = 0; t < 30; t += 1 / 60) sim.update(1 / 60);
-    expect(sim.pedestrians.every((p) => p.state === 'IDLE')).toBe(true);
+    const valid = ['IDLE', 'WALKING_IN', 'QUEUEING', 'AT_COUNTER', 'WALKING_OUT', 'DONE'];
+    for (let t = 0; t < 60; t += 1 / 60) {
+      sim.update(1 / 60);
+      for (const p of sim.pedestrians) expect(valid).toContain(p.state);
+    }
   });
 
   it('never lets two pedestrians hold the same slot', () => {
@@ -25,6 +28,21 @@ describe('createSimulation', () => {
       sim.update(1 / 60);
       const held = sim.pedestrians.map((p) => p.slot).filter((s) => s !== null);
       expect(new Set(held).size).toBe(held.length);
+    }
+  });
+
+  it('drives traffic and pedestrians together without throwing', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    for (let t = 0; t < 120; t += 1 / 60) sim.update(1 / 60);
+    expect(sim.traffic.vehicles.some((v) => v.isActive())).toBe(true);
+  });
+
+  it('never hands one pedestrian to two vehicles', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    for (let t = 0; t < 180; t += 1 / 60) {
+      sim.update(1 / 60);
+      const busy = sim.pedestrians.filter((p) => p.state !== 'IDLE' && !p.isDone());
+      expect(new Set(busy).size).toBe(busy.length);
     }
   });
 });

@@ -53,7 +53,7 @@ describe('createShop', () => {
 
   it('keeps every part inside the lot plus its street apron', () => {
     const bounds = boundsOf(shop);
-    expect(bounds.min.x).toBeGreaterThanOrEqual(-40.01);
-    expect(bounds.max.x).toBeLessThanOrEqual(40.01);
+    expect(bounds.min.x).toBeGreaterThanOrEqual(-52.01);
+    expect(bounds.max.x).toBeLessThanOrEqual(52.01);
   });
 });

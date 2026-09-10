@@ -200,7 +200,7 @@ export function createVehicle(materials, layout, { index, type, horn }) {
             if (distance <= T.laneChange.mergeDistance && distance > 0) {
               if (lane.index === 0) {
                 state = 'APPROACHING_LOT';
-              } else if (world.laneIsClear(0, x, T.laneChange.changeClearance)) {
+              } else if (world.laneIsClear(0, x, T.laneChange.changeClearance, type.length)) {
                 beginChange(world.lanes[0]);
               }
             }
@@ -212,7 +212,7 @@ export function createVehicle(materials, layout, { index, type, horn }) {
               const ahead = Math.abs(leader.x - x) - (type.length + leader.length) / 2;
               if (
                 ahead < T.laneChange.overtakeGap &&
-                world.laneIsClear(lane.neighbour, x, T.laneChange.changeClearance)
+                world.laneIsClear(lane.neighbour, x, T.laneChange.changeClearance, type.length)
               ) {
                 beginChange(world.lanes[lane.neighbour]);
               }
@@ -237,8 +237,20 @@ export function createVehicle(materials, layout, { index, type, horn }) {
         case 'APPROACHING_LOT': {
           const entrance = layout.parking.entrance.centreX;
           const remaining = x - entrance;
-          const target = Math.min(type.cruise, Math.max(0.6, remaining * 0.9));
-          approachSpeed(remaining <= 0.05 ? 0 : target, dt);
+          // Easing toward the entrance is not enough on its own: a second car
+          // heading for the same entrance would drive into the back of the
+          // first. Whichever of the two limits is lower wins.
+          const { gap, leaderSpeed } = gapToLeader(world);
+          const following = safeSpeed({
+            gap,
+            leaderSpeed,
+            cruise: type.cruise,
+            minGap: T.follow.minGap,
+            headway: T.follow.headway,
+          });
+          const approach =
+            remaining <= 0.05 ? 0 : Math.min(type.cruise, Math.max(0.6, remaining * 0.9));
+          approachSpeed(Math.min(following, approach), dt);
           const moved = Math.min(speed * dt, Math.max(0, remaining));
           x -= moved;
           rollWheels(moved);
@@ -336,7 +348,7 @@ export function createVehicle(materials, layout, { index, type, horn }) {
           if (follower.done) {
             // Wait at the mouth of the exit until there is a gap; otherwise
             // the car would appear in the lane on top of passing traffic.
-            if (!world.laneIsClear(0, x, T.laneChange.changeClearance)) {
+            if (!world.laneIsClear(0, x, T.laneChange.changeClearance, type.length)) {
               speed = 0;
               place();
               return;
