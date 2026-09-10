@@ -186,15 +186,18 @@ export const layout = {
     boardSeconds: 0.8,
     speeds: { car: 7.5, walk: 1.35 },
     lane: { z: 28.25, enterX: 45, exitX: -45 },
+    // Interleaved by row. The pool hands out bays in order, so listing all of
+    // row 0 first would leave row 1 permanently empty while only three cars
+    // are simulated — and the row 1 walkway route would never be exercised.
     bays: [
       { x: -3.9, z: 13.3, facing: Math.PI, row: 0 },
-      { x: -1.3, z: 13.3, facing: Math.PI, row: 0 },
-      { x: 1.3, z: 13.3, facing: Math.PI, row: 0 },
-      { x: 3.9, z: 13.3, facing: Math.PI, row: 0 },
-      { x: -3.9, z: 21.7, facing: 0, row: 1 },
-      { x: -1.3, z: 21.7, facing: 0, row: 1 },
       { x: 1.3, z: 21.7, facing: 0, row: 1 },
+      { x: 1.3, z: 13.3, facing: Math.PI, row: 0 },
+      { x: -3.9, z: 21.7, facing: 0, row: 1 },
+      { x: -1.3, z: 13.3, facing: Math.PI, row: 0 },
       { x: 3.9, z: 21.7, facing: 0, row: 1 },
+      { x: 3.9, z: 13.3, facing: Math.PI, row: 0 },
+      { x: -1.3, z: 21.7, facing: 0, row: 1 },
     ],
     car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
     walk: { doorOffset: 1.1, sidewalkZ: 10.2, plazaZ: 8.6 },
