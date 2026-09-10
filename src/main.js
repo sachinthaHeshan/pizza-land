@@ -1,0 +1,98 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { createTextures } from './textures.js';
+import { createMaterials } from './materials.js';
+import { createShop } from './scene.js';
+import { layout } from './layout.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcfe0f5);
+
+// Metals need something to reflect. Without an environment the stainless
+// counters render as flat black rather than brushed steel.
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.35;
+pmrem.dispose();
+
+const textures = createTextures();
+for (const texture of Object.values(textures)) {
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+}
+const materials = createMaterials(textures);
+const shop = createShop(materials, layout);
+scene.add(shop);
+
+const c = layout.camera;
+const target = new THREE.Vector3(...c.target);
+const offset = new THREE.Vector3(...c.direction).normalize().multiplyScalar(c.distance);
+
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 400);
+camera.position.copy(target).add(offset);
+camera.lookAt(target);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.copy(target);
+controls.maxPolarAngle = Math.PI / 2.05;
+
+function resize() {
+  const aspect = window.innerWidth / window.innerHeight;
+  const half = c.frustumSize / 2;
+  camera.left = -half * aspect;
+  camera.right = half * aspect;
+  camera.top = half;
+  camera.bottom = -half;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+resize();
+window.addEventListener('resize', resize);
+
+function resetView() {
+  // With damping on, OrbitControls decays its residual momentum multiplicatively
+  // and never reaches zero, so a reset issued after a fling gets dragged back off
+  // target. Running update with damping off takes the branch that zeroes the
+  // internal delta, making the reset land exactly.
+  const damping = controls.enableDamping;
+  controls.enableDamping = false;
+  // Flush first: this update applies whatever momentum is left and then zeroes
+  // it. Repositioning before the flush would let that momentum kick the camera
+  // straight back off target.
+  controls.update();
+  camera.position.copy(target).add(offset);
+  camera.zoom = 1;
+  camera.updateProjectionMatrix();
+  controls.target.copy(target);
+  controls.update();
+  controls.enableDamping = damping;
+}
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'r' || event.key === 'R') resetView();
+});
+
+const fireLight = shop.userData.fireLight;
+const baseIntensity = fireLight.userData.baseIntensity;
+const clock = new THREE.Clock();
+
+function animate() {
+  const t = clock.getElapsedTime();
+  fireLight.intensity =
+    baseIntensity * (0.86 + 0.14 * Math.sin(t * 9.3) * Math.sin(t * 3.1));
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+animate();
