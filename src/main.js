@@ -6,6 +6,7 @@ import { createMaterials } from "./materials.js";
 import { createShop } from "./scene.js";
 import { layout } from "./layout.js";
 import { createHorn } from "./sim/audio.js";
+import { nextSimSpeed, labelSimSpeed } from "./sim/speed.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -95,6 +96,13 @@ soundButton.addEventListener('click', () => {
   soundButton.hidden = true;
 });
 
+let simSpeed = 1;
+const speedButton = document.getElementById('speed');
+speedButton.addEventListener('click', () => {
+  simSpeed = nextSimSpeed(simSpeed);
+  speedButton.textContent = labelSimSpeed(simSpeed);
+});
+
 const fireLight = shop.userData.fireLight;
 const baseIntensity = fireLight.userData.baseIntensity;
 const clock = new THREE.Clock();
@@ -107,7 +115,7 @@ function animate() {
   const t = clock.elapsedTime;
   fireLight.intensity =
     baseIntensity * (0.86 + 0.14 * Math.sin(t * 9.3) * Math.sin(t * 3.1));
-  shop.userData.simulation.update(delta);
+  shop.userData.simulation.update(delta * simSpeed);
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

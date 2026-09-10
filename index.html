@@ -7,17 +7,23 @@
     <style>
       html, body { margin: 0; height: 100%; overflow: hidden; background: #cfe0f5; }
       canvas { display: block; }
-      #sound {
+      #hud {
         position: fixed; left: 16px; bottom: 16px; z-index: 1;
+        display: flex; gap: 8px;
+      }
+      #hud button {
         font: 500 13px/1 system-ui, sans-serif; color: #2f4a35;
         background: #f6efe4; border: 1px solid #2f4a35; border-radius: 999px;
-        padding: 9px 15px; cursor: pointer;
+        padding: 9px 15px; cursor: pointer; white-space: nowrap;
       }
       #sound[hidden] { display: none; }
     </style>
   </head>
   <body>
-    <button id="sound">click for sound</button>
+    <div id="hud">
+      <button id="sound">click for sound</button>
+      <button id="speed" type="button">1x</button>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

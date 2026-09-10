@@ -19,7 +19,15 @@ describe('main.js render loop', () => {
 
   it('advances it with a real frame delta, not a constant', () => {
     expect(source).toMatch(/clock\.getDelta\(\)/);
-    expect(source).toMatch(/simulation\.update\(\s*delta\s*\)/);
+    expect(source).toMatch(/simulation\.update\(\s*delta\s*\*\s*simSpeed\s*\)/);
+  });
+
+  it('lets a HUD button cycle the simulation through 1x, 2x, and 5x', () => {
+    expect(source).toMatch(/import \{ nextSimSpeed, labelSimSpeed \} from ["']\.\/sim\/speed\.js["']/);
+    expect(source).toMatch(/document\.getElementById\(['"]speed['"]\)/);
+    expect(source).toMatch(/speedButton\.addEventListener\('click'/);
+    expect(source).toMatch(/simSpeed = nextSimSpeed\(simSpeed\)/);
+    expect(source).toMatch(/speedButton\.textContent = labelSimSpeed\(simSpeed\)/);
   });
 
   it('clamps the delta so a backgrounded tab cannot fast-forward the cycle', () => {
