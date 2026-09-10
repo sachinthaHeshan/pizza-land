@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { box, wallRun, yOnFloor } from '../utils/geometry.js';
 
-function trimSpan(span, axis, at, pillars, inset) {
+function trimRunSpan(span, axis, at, pillars, inset, layout) {
   let [start, end] = span;
   for (const [px, pz] of pillars) {
     const onRun =
@@ -24,12 +24,13 @@ export function createPerimeter(materials, layout) {
 
   for (const run of perimeter.runs) {
     const at = run.axis === 'x' ? run.z : run.x;
-    const along = trimSpan(
+    const along = trimRunSpan(
       run.axis === 'x' ? run.x : run.z,
       run.axis,
       at,
       perimeter.pillars,
-      pillarInset
+      pillarInset,
+      layout
     );
     if (along[1] - along[0] <= 0.001) continue;
 

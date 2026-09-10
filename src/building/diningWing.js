@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { box, wallRun, yOnFloor } from '../utils/geometry.js';
+import { box, wallRun, yOnFloor, trimSpanAtPillars, meetInnerFace } from '../utils/geometry.js';
 
 export function createDiningWing(materials, layout) {
   const group = new THREE.Group();
@@ -10,13 +10,24 @@ export function createDiningWing(materials, layout) {
   const plinthY = yOnFloor([0, d.plinthHeight - layout.surfaceEps], floor);
   const partitionY = yOnFloor([0, d.wallHeight], floor);
 
-  // West wall: continuous plinth, header band, and piers around the window bays.
+  // West wall owns its corners; it only yields to perimeter corner pillars.
   const west = d.west;
+  const westZ =
+    trimSpanAtPillars(west.z, {
+      axis: 'z',
+      at: west.x,
+      pillars: layout.perimeter.pillars,
+      size: layout.perimeter.pillarSize,
+    }) ?? west.z;
+
+  // North wall butts into the west face and the partition face.
+  const northX = meetInnerFace(meetInnerFace(d.north.x, t, 'start'), t, 'end');
+
   group.add(
     wallRun(materials.brick, {
       axis: 'z',
       at: west.x,
-      span: west.z,
+      span: westZ,
       y: plinthY,
       thickness: t,
     })
@@ -25,19 +36,19 @@ export function createDiningWing(materials, layout) {
     wallRun(materials.plaster, {
       axis: 'z',
       at: west.x,
-      span: west.z,
+      span: westZ,
       y: [d.windows.head, d.wallHeight],
       thickness: t,
     })
   );
 
   const piers = [];
-  let cursor = west.z[0];
+  let cursor = westZ[0];
   for (const bay of d.windows.bays) {
     piers.push([cursor, bay[0]]);
     cursor = bay[1];
   }
-  piers.push([cursor, west.z[1]]);
+  piers.push([cursor, westZ[1]]);
 
   for (const pier of piers) {
     if (pier[1] - pier[0] <= 0.001) continue;
@@ -70,12 +81,11 @@ export function createDiningWing(materials, layout) {
     );
   }
 
-  // North wall: solid.
   group.add(
     wallRun(materials.brick, {
       axis: 'x',
       at: d.north.z,
-      span: d.north.x,
+      span: northX,
       y: plinthY,
       thickness: t,
     })
@@ -84,20 +94,19 @@ export function createDiningWing(materials, layout) {
     wallRun(materials.plaster, {
       axis: 'x',
       at: d.north.z,
-      span: d.north.x,
+      span: northX,
       y: [d.plinthHeight, d.wallHeight],
       thickness: t,
     })
   );
 
-  // Partition with a doorway.
   const p = d.partition;
   const segments = [
-    [p.z[0], p.door[0]],
-    [p.door[1], p.z[1]],
+    meetInnerFace([p.z[0], p.door[0]], t, 'start'),
+    meetInnerFace([p.door[1], p.z[1]], t, 'end'),
   ];
   for (const segment of segments) {
-    if (segment[1] - segment[0] <= 0.001) continue;
+    if (!segment) continue;
     group.add(
       wallRun(materials.wood, {
         axis: 'z',

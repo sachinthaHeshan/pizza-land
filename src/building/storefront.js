@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { box, wallRun, awning, yOnFloor } from '../utils/geometry.js';
+import { box, wallRun, awning, yOnFloor, meetInnerFace } from '../utils/geometry.js';
 
 export function createStorefront(materials, layout) {
   const group = new THREE.Group();
@@ -8,18 +8,19 @@ export function createStorefront(materials, layout) {
   const t = s.thickness;
   const halfPost = s.postSize / 2;
   const plinthY = yOnFloor(s.plinth, layout.floorContact);
+  const facadeX = meetInnerFace(meetInnerFace(s.x, t, 'start'), t, 'end');
 
   // Brick plinth runs between posts so it is not meshed twice under each post.
   const plinthSpans = [
-    [s.x[0], s.posts[0] - halfPost],
+    [facadeX[0], s.posts[0] - halfPost],
     ...s.posts.slice(0, -1).map((post, index) => [
       post + halfPost,
       s.posts[index + 1] - halfPost,
     ]),
-    [s.posts[s.posts.length - 1] + halfPost, s.x[1]],
+    [s.posts[s.posts.length - 1] + halfPost, facadeX[1]],
   ];
   for (const span of plinthSpans) {
-    if (span[1] - span[0] <= 0.001) continue;
+    if (!span || span[1] - span[0] <= 0.001) continue;
     group.add(
       wallRun(materials.brick, {
         axis: 'x',
@@ -34,7 +35,7 @@ export function createStorefront(materials, layout) {
     wallRun(materials.greenPaint, {
       axis: 'x',
       at: s.z,
-      span: s.x,
+      span: facadeX,
       y: s.header,
       thickness: t + 0.08,
     })

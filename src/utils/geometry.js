@@ -8,6 +8,35 @@ export function yOnFloor(y, contact = 0.01) {
   return y[0] <= 0 ? [contact, y[1]] : y;
 }
 
+// Shortens a wall span so it stops at the inner face of an adjoining wall.
+export function trimSpan(span, { start = 0, end = 0 } = {}) {
+  const trimmed = [span[0] + start, span[1] - end];
+  return trimmed[1] - trimmed[0] <= 0.001 ? null : trimmed;
+}
+
+// Stops a span at pillar faces on its endpoints.
+export function trimSpanAtPillars(span, { axis, at, pillars, size }) {
+  const half = size / 2;
+  let [start, end] = span;
+  for (const [px, pz] of pillars) {
+    const onRun =
+      axis === 'x' ? Math.abs(pz - at) < 0.01 : Math.abs(px - at) < 0.01;
+    if (!onRun) continue;
+    const edge = axis === 'x' ? px : pz;
+    if (Math.abs(edge - start) < 0.01) start += half;
+    if (Math.abs(edge - end) < 0.01) end -= half;
+  }
+  return end - start <= 0.001 ? null : [start, end];
+}
+
+// Meets a perpendicular wall's inner face without leaving a corner gap.
+export function meetInnerFace(span, thickness, end) {
+  const inset = thickness / 2;
+  return end === 'start'
+    ? trimSpan(span, { start: inset })
+    : trimSpan(span, { end: inset });
+}
+
 function tileOf(material) {
   const tile = material && material.userData ? material.userData.tile : null;
   return typeof tile === 'number' && tile > 0 ? tile : null;

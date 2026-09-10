@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { box, wallRun, awning, yOnFloor } from '../utils/geometry.js';
+import { box, wallRun, awning, yOnFloor, trimSpanAtPillars, meetInnerFace } from '../utils/geometry.js';
 
 export function createSideWing(materials, layout) {
   const group = new THREE.Group();
@@ -9,12 +9,23 @@ export function createSideWing(materials, layout) {
   const w = s.window;
   const plinthY = yOnFloor([0, s.plinthHeight - layout.surfaceEps], layout.floorContact);
 
-  // East face: solid.
+  // East wall owns the corner; it only yields to the perimeter pillar at (9, 6).
+  const eastZ =
+    trimSpanAtPillars(s.footprint.z, {
+      axis: 'z',
+      at: s.footprint.x[1],
+      pillars: layout.perimeter.pillars,
+      size: layout.perimeter.pillarSize,
+    }) ?? s.footprint.z;
+
+  // Front wall butts into the east face.
+  const frontX = meetInnerFace(s.footprint.x, t, 'end');
+
   group.add(
     wallRun(materials.brick, {
       axis: 'z',
       at: s.footprint.x[1],
-      span: s.footprint.z,
+      span: eastZ,
       y: plinthY,
       thickness: t,
     })
@@ -23,13 +34,12 @@ export function createSideWing(materials, layout) {
     wallRun(materials.plaster, {
       axis: 'z',
       at: s.footprint.x[1],
-      span: s.footprint.z,
+      span: eastZ,
       y: [s.plinthHeight, s.wallHeight],
       thickness: t,
     })
   );
 
-  // Front face: plinth, header, and piers either side of the window.
   const bay = [w.centerX - w.width / 2, w.centerX + w.width / 2];
   const head = w.sill + w.height;
 
@@ -37,7 +47,7 @@ export function createSideWing(materials, layout) {
     wallRun(materials.brick, {
       axis: 'x',
       at: w.z,
-      span: s.footprint.x,
+      span: frontX,
       y: plinthY,
       thickness: t,
     })
@@ -46,12 +56,12 @@ export function createSideWing(materials, layout) {
     wallRun(materials.plaster, {
       axis: 'x',
       at: w.z,
-      span: s.footprint.x,
+      span: frontX,
       y: [head, s.wallHeight],
       thickness: t,
     })
   );
-  for (const pier of [[s.footprint.x[0], bay[0]], [bay[1], s.footprint.x[1]]]) {
+  for (const pier of [[frontX[0], bay[0]], [bay[1], frontX[1]]]) {
     if (pier[1] - pier[0] <= 0.001) continue;
     group.add(
       wallRun(materials.plaster, {

@@ -40,7 +40,7 @@ export function createKitchen(materials, layout) {
       axis: 'x',
       at: k.tileWall.z + k.tileWall.thickness,
       span: k.tileWall.x,
-      y: k.tileWall.y,
+      y: [k.tileWall.y[0] + layout.surfaceEps, k.tileWall.y[1]],
       thickness: k.tileWall.thickness,
     })
   );

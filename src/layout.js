@@ -80,8 +80,8 @@ export const layout = {
   perimeter: {
     runs: [
       { axis: 'x', z: -8, x: [-11, 9] },
-      // Stop short of the side wing so the two east faces do not share a seam.
-      { axis: 'z', x: 9, z: [-8, 1.98] },
+      // Meets the side-wing east face at its inner edge (z = 2 − t/2).
+      { axis: 'z', x: 9, z: [-8, 1.85] },
     ],
     pillars: [[-11, -8], [9, -8], [9, 6], [-11, 2]],
     pillarSize: 0.7,
