@@ -55,9 +55,8 @@ export function createQueue(materials, layout) {
     group.add(rope(materials, b.posts[i], b.posts[i + 1], b));
   }
 
-  for (const person of q.people) {
-    group.add(createFigure(materials, { ...person, facing: q.facing }));
-  }
+  const cashier = q.cashier;
+  group.add(createFigure(materials, { ...cashier, facing: cashier.facing }));
 
   return group;
 }

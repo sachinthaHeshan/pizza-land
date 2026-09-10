@@ -100,8 +100,8 @@ export const layout = {
   },
 
   // The queue forms on the plaza off the counter's customer side (+Z) and is
-  // fenced by a stanchion-and-rope lane, as in the reference. `people` is
-  // removed in Task 8, once the simulation owns who stands here.
+  // fenced by a stanchion-and-rope lane, as in the reference. Who stands in
+  // the queue is owned by the simulation, not placed here.
   queue: {
     facing: Math.PI,
     barrier: {
@@ -113,13 +113,6 @@ export const layout = {
       ropeY: 0.74,
       ropeRadius: 0.028,
     },
-    people: [
-      { x: 1.2, z: 5.1, height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
-      { x: 0.5, z: 5.9, height: 1.62, cloth: 'clothYellow', hair: 'hairLight', skin: 'skin', longHair: true },
-      { x: -0.1, z: 6.5, height: 1.28, cloth: 'clothGreen', hair: 'hairLight', skin: 'skin' },
-      { x: -0.7, z: 7.1, height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
-      { x: -1.3, z: 7.7, height: 1.3, cloth: 'clothOrange', hair: 'hairDark', skin: 'skin', cap: true },
-    ],
     slots: [
       [1.2, 5.1],
       [0.5, 5.9],
