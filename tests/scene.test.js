@@ -21,6 +21,7 @@ describe('createShop', () => {
       'oven',
       'counter',
       'sideWing',
+      'queue',
       'lighting',
     ]);
   });

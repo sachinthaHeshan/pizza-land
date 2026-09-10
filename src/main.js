@@ -1,10 +1,10 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { createTextures } from './textures.js';
-import { createMaterials } from './materials.js';
-import { createShop } from './scene.js';
-import { layout } from './layout.js';
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { createTextures } from "./textures.js";
+import { createMaterials } from "./materials.js";
+import { createShop } from "./scene.js";
+import { layout } from "./layout.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -36,7 +36,9 @@ scene.add(shop);
 
 const c = layout.camera;
 const target = new THREE.Vector3(...c.target);
-const offset = new THREE.Vector3(...c.direction).normalize().multiplyScalar(c.distance);
+const offset = new THREE.Vector3(...c.direction)
+  .normalize()
+  .multiplyScalar(c.distance);
 
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 400);
 camera.position.copy(target).add(offset);
@@ -45,8 +47,8 @@ camera.lookAt(target);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
+controls.enableRotate = true;
 controls.target.copy(target);
-controls.maxPolarAngle = Math.PI / 2.05;
 
 function resize() {
   const aspect = window.innerWidth / window.innerHeight;
@@ -59,7 +61,7 @@ function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 resize();
-window.addEventListener('resize', resize);
+window.addEventListener("resize", resize);
 
 function resetView() {
   // With damping on, OrbitControls decays its residual momentum multiplicatively
@@ -79,8 +81,8 @@ function resetView() {
   controls.update();
   controls.enableDamping = damping;
 }
-window.addEventListener('keydown', (event) => {
-  if (event.key === 'r' || event.key === 'R') resetView();
+window.addEventListener("keydown", (event) => {
+  if (event.key === "r" || event.key === "R") resetView();
 });
 
 const fireLight = shop.userData.fireLight;

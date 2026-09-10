@@ -99,6 +99,28 @@ export const layout = {
     awning: { x: [5, 9], wallY: 3.0, frontY: 2.55, frontZ: 7.1, valance: 0.22 },
   },
 
+  // The queue forms on the plaza off the counter's customer side (+Z) and is
+  // fenced by a stanchion-and-rope lane, as in the reference.
+  queue: {
+    facing: Math.PI,
+    barrier: {
+      posts: [[2.8, 4.9], [2.8, 6.3], [2.8, 7.7]],
+      height: 0.95,
+      postRadius: 0.055,
+      baseRadius: 0.17,
+      baseHeight: 0.06,
+      ropeY: 0.74,
+      ropeRadius: 0.028,
+    },
+    people: [
+      { x: 1.2, z: 5.1, height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
+      { x: 0.5, z: 5.9, height: 1.62, cloth: 'clothYellow', hair: 'hairLight', skin: 'skin', longHair: true },
+      { x: -0.1, z: 6.5, height: 1.28, cloth: 'clothGreen', hair: 'hairLight', skin: 'skin' },
+      { x: -0.7, z: 7.1, height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
+      { x: -1.3, z: 7.7, height: 1.3, cloth: 'clothOrange', hair: 'hairDark', skin: 'skin', cap: true },
+    ],
+  },
+
   lighting: {
     hemi: { sky: 0xbcd6ff, ground: 0x6b5a45, intensity: 0.55 },
     sun: {
@@ -129,5 +151,6 @@ export const layout = {
     oven: { min: [5.4, 0, -6.6], max: [9.0, 5.1, -3.0] },
     counter: { min: [-1.2, 0, 1.3], max: [5.2, 1.2, 4.6] },
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
+    queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
   },
 };

@@ -7,6 +7,7 @@ import { createKitchen } from './building/kitchen.js';
 import { createOven } from './building/oven.js';
 import { createCounter } from './building/counter.js';
 import { createSideWing } from './building/sideWing.js';
+import { createQueue } from './building/queue.js';
 import { createLighting } from './lighting.js';
 
 export function createShop(materials, layout) {
@@ -21,6 +22,7 @@ export function createShop(materials, layout) {
   const oven = createOven(materials, layout);
   const counter = createCounter(materials, layout);
   const sideWing = createSideWing(materials, layout);
+  const queue = createQueue(materials, layout);
 
   const s = layout.storefront;
   const lighting = createLighting(layout, {
@@ -32,7 +34,7 @@ export function createShop(materials, layout) {
     sideWindow: sideWing.userData.windowAnchor,
   });
 
-  shop.add(ground, perimeter, diningWing, storefront, kitchen, oven, counter, sideWing, lighting);
+  shop.add(ground, perimeter, diningWing, storefront, kitchen, oven, counter, sideWing, queue, lighting);
   shop.userData.fireLight = oven.userData.fireLight;
 
   return shop;
