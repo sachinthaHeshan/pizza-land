@@ -42,6 +42,9 @@ export const MATERIAL_KEYS = [
   'pizzaBox',
   'planting',
   'laneCentre',
+  'busBody',
+  'vanBody',
+  'horn',
 ];
 
 // World units spanned by one full texture image. The geometry helpers scale
@@ -123,6 +126,9 @@ export function createMaterials(textures) {
     pizzaBox: standard('pizzaBox', { color: 0xd8b98a, roughness: 0.85, metalness: 0.0 }),
     planting: standard('planting', { color: 0x5c7f4a, roughness: 0.92, metalness: 0.0 }),
     laneCentre: standard('laneCentre', { color: 0xe8d14a, roughness: 0.8, metalness: 0.0 }),
+    busBody: standard('busBody', { color: 0xc9843a, roughness: 0.42, metalness: 0.2 }),
+    vanBody: standard('vanBody', { color: 0xe4e1d8, roughness: 0.45, metalness: 0.18 }),
+    horn: new THREE.MeshBasicMaterial({ name: 'horn', color: 0xffd66b }),
     glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a }),
     ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a }),
   };

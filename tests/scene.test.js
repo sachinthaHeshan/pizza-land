@@ -48,7 +48,7 @@ describe('createShop', () => {
 
   it('advances without throwing', () => {
     for (let t = 0; t < 60; t += 1 / 60) shop.userData.simulation.update(1 / 60);
-    expect(shop.userData.simulation.customers).toHaveLength(layout.sim.customers);
+    expect(shop.userData.simulation.customers).toHaveLength(layout.sim.pedestrians);
   });
 
   it('keeps every part inside the lot plus its street apron', () => {

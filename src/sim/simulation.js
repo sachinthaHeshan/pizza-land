@@ -9,7 +9,7 @@ export function createSimulation(materials, layout) {
   const bays = createPool(layout.sim.bays);
   const customers = [];
 
-  for (let i = 0; i < layout.sim.customers; i++) {
+  for (let i = 0; i < layout.sim.pedestrians; i++) {
     const customer = createCustomer(materials, layout, { index: i });
     customer.start(i * layout.sim.spawnGap);
     customers.push(customer);

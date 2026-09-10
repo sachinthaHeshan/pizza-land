@@ -19,8 +19,8 @@ describe('createSimulation', () => {
     const sim = createSimulation(stubMaterials(), layout);
     expect(sim.group).toBeInstanceOf(THREE.Group);
     expect(sim.group.name).toBe('simulation');
-    expect(sim.group.children).toHaveLength(layout.sim.customers);
-    expect(sim.customers).toHaveLength(layout.sim.customers);
+    expect(sim.group.children).toHaveLength(layout.sim.pedestrians);
+    expect(sim.customers).toHaveLength(layout.sim.pedestrians);
   });
 
   it('never lets two customers hold the same bay', () => {
@@ -64,7 +64,7 @@ describe('createSimulation', () => {
         if (c.state === 'AT_COUNTER') served.add(i);
       });
     });
-    expect(served.size).toBe(layout.sim.customers);
+    expect(served.size).toBe(layout.sim.pedestrians);
   });
 
   it('has somebody visible most of the time once warmed up', () => {

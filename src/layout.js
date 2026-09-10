@@ -179,7 +179,9 @@ export const layout = {
   },
 
   sim: {
-    customers: 3,
+    // Never more than there are queue slots, or the extra pedestrian would
+    // reach the plaza and find nowhere to stand.
+    pedestrians: 5,
     spawnGap: 9.0,
     respawnDelay: 2.0,
     serveSeconds: 2.5,
@@ -206,6 +208,40 @@ export const layout = {
       { height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
       { height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
       { height: 1.62, cloth: 'clothYellow', hair: 'hairLight', skin: 'skin', longHair: true },
+    ],
+  },
+
+  traffic: {
+    seed: 20260910,
+    perLane: 6,
+    spawnGap: 14,
+    spawnX: 40,
+    pizzaChance: 0.18,
+    follow: { minGap: 1.6, headway: 0.9, accel: 4.5, decel: 9.0 },
+    laneChange: {
+      changeSeconds: 1.2,
+      mergeDistance: 26,
+      overtakeGap: 9,
+      changeClearance: 7,
+    },
+    waitSeconds: 10,
+    hornInterval: 1.2,
+    types: [
+      {
+        key: 'car', model: 'car', share: 0.62, cruise: 9.0,
+        length: 4.2, width: 1.8, height: 1.55, wantsPizza: true,
+        colours: ['carGreen', 'carRed', 'carBlue'],
+      },
+      {
+        key: 'van', model: 'van', share: 0.22, cruise: 8.0,
+        length: 5.2, width: 2.0, height: 2.3, wantsPizza: false,
+        colours: ['vanBody'],
+      },
+      {
+        key: 'bus', model: 'bus', share: 0.16, cruise: 7.0,
+        length: 9.0, width: 2.4, height: 3.0, wantsPizza: false,
+        colours: ['busBody'],
+      },
     ],
   },
 
@@ -242,5 +278,6 @@ export const layout = {
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
     simulation: { min: [-46, 0, 4], max: [46, 2.2, 42] },
+    traffic: { min: [-46, 0, 25], max: [46, 3.4, 42] },
   },
 };

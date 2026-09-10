@@ -48,11 +48,11 @@ describe('layout', () => {
 
 describe('layout.sim', () => {
   it('gives every customer a parking bay', () => {
-    expect(layout.sim.bays.length).toBeGreaterThanOrEqual(layout.sim.customers);
+    expect(layout.sim.bays.length).toBeGreaterThanOrEqual(layout.sim.pedestrians);
   });
 
   it('has more queue slots than customers so the line never overflows', () => {
-    expect(layout.queue.slots.length).toBeGreaterThanOrEqual(layout.sim.customers);
+    expect(layout.queue.slots.length).toBeGreaterThanOrEqual(layout.sim.pedestrians);
   });
 
   it('orders queue slots front to back, away from the counter', () => {
