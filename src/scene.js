@@ -1,0 +1,39 @@
+import * as THREE from 'three';
+import { createGround } from './building/ground.js';
+import { createPerimeter } from './building/perimeter.js';
+import { createDiningWing } from './building/diningWing.js';
+import { createStorefront } from './building/storefront.js';
+import { createKitchen } from './building/kitchen.js';
+import { createOven } from './building/oven.js';
+import { createCounter } from './building/counter.js';
+import { createSideWing } from './building/sideWing.js';
+import { createLighting } from './lighting.js';
+
+export function createShop(materials, layout) {
+  const shop = new THREE.Group();
+  shop.name = 'shop';
+
+  const ground = createGround(materials, layout);
+  const perimeter = createPerimeter(materials, layout);
+  const diningWing = createDiningWing(materials, layout);
+  const storefront = createStorefront(materials, layout);
+  const kitchen = createKitchen(materials, layout);
+  const oven = createOven(materials, layout);
+  const counter = createCounter(materials, layout);
+  const sideWing = createSideWing(materials, layout);
+
+  const s = layout.storefront;
+  const lighting = createLighting(layout, {
+    lamps: storefront.userData.lampAnchors,
+    storefront: [
+      new THREE.Vector3(-8.6, 1.8, s.z - 1.0),
+      new THREE.Vector3(-4.6, 1.8, s.z - 1.0),
+    ],
+    sideWindow: sideWing.userData.windowAnchor,
+  });
+
+  shop.add(ground, perimeter, diningWing, storefront, kitchen, oven, counter, sideWing, lighting);
+  shop.userData.fireLight = oven.userData.fireLight;
+
+  return shop;
+}
