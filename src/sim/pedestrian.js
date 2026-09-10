@@ -1,25 +1,15 @@
 import * as THREE from 'three';
 import { createFigure } from '../models/figure.js';
-import { createCar } from '../models/car.js';
 import { createPizzaBox } from '../models/pizzaBox.js';
-import {
-  arrivalPath,
-  departurePath,
-  walkInPath,
-  walkOutPath,
-  doorPosition,
-} from './paths.js';
+import { walkInPath, walkOutPath, doorPosition } from './paths.js';
 
-export const STATES = Object.freeze([
+export const PEDESTRIAN_STATES = Object.freeze([
   'IDLE',
-  'APPROACHING',
-  'PARKING',
   'WALKING_IN',
   'QUEUEING',
   'AT_COUNTER',
   'WALKING_OUT',
-  'BOARDING',
-  'DEPARTING',
+  'DONE',
 ]);
 
 // Walks a follower along a list of {x, z} waypoints at a fixed speed.
@@ -55,9 +45,7 @@ function createFollower() {
           this.index++;
           continue;
         }
-        if (!target.reverse) {
-          this.heading = Math.atan2(dx, dz);
-        }
+        this.heading = Math.atan2(dx, dz);
         const move = Math.min(budget, distance);
         this.x += (dx / distance) * move;
         this.z += (dz / distance) * move;
@@ -72,30 +60,25 @@ function createFollower() {
   };
 }
 
-export function createCustomer(materials, layout, { index }) {
+export function createPedestrian(materials, layout, { index }) {
   const sim = layout.sim;
   const person = sim.people[index % sim.people.length];
-  const colour = sim.car.colours[index % sim.car.colours.length];
 
   const group = new THREE.Group();
-  group.name = `customer-${index}`;
+  group.name = `pedestrian-${index}`;
   group.visible = false;
 
-  const car = createCar(materials, { colour, ...sim.car });
   const figure = createFigure(materials, { ...person, x: 0, z: 0, facing: 0 });
   const pizzaBox = createPizzaBox(materials);
   pizzaBox.visible = false;
-
-  // Car and figure move independently, so they are siblings under a group that
-  // stays at the origin; each carries its own world position.
-  group.add(car, figure, pizzaBox);
+  group.add(figure, pizzaBox);
 
   const follower = createFollower();
   let state = 'IDLE';
   let timer = 0;
   let stridePhase = 0;
-  let bay = null;
   let slot = null;
+  let bay = null;
 
   const boxHeight = person.height * 0.52;
   const boxReach = person.height * 0.16;
@@ -105,20 +88,7 @@ export function createCustomer(materials, layout, { index }) {
     timer = 0;
   }
 
-  // Eases toward a heading by the shortest arc, so the car sweeps through its
-  // turns instead of snapping when a waypoint changes direction.
-  function turnCar(target, dt) {
-    const delta = ((target - car.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-    car.rotation.y += delta * Math.min(1, dt * 6);
-  }
-
-  function placeCar(x, z, heading, dt) {
-    car.position.set(x, 0, z);
-    if (dt === undefined) car.rotation.y = heading;
-    else turnCar(heading, dt);
-  }
-
-  function placeFigure(x, z, heading) {
+  function place(x, z, heading) {
     figure.position.set(x, 0, z);
     figure.rotation.y = heading;
     pizzaBox.position.set(
@@ -145,23 +115,12 @@ export function createCustomer(materials, layout, { index }) {
     }
   }
 
-  function rollWheels(distance) {
-    const radius = sim.car.height * 0.21;
-    for (const wheel of car.userData.wheels) {
-      wheel.rotation.x -= distance / radius;
-    }
-  }
-
-  const customer = {
+  return {
     group,
     figure,
-    car,
 
     get state() {
       return state;
-    },
-    get bay() {
-      return bay;
     },
     get slot() {
       return slot;
@@ -174,56 +133,33 @@ export function createCustomer(materials, layout, { index }) {
       return figure.position.clone();
     },
 
-    start(delay = 0) {
-      setState('IDLE');
-      timer = -delay;
+    isDone() {
+      return state === 'DONE';
+    },
+
+    start(atBay) {
+      bay = atBay;
+      slot = null;
+      pizzaBox.visible = false;
+      group.visible = true;
+      const door = doorPosition(layout, bay);
+      place(door.x, door.z, layout.queue.facing);
+      setState('WALKING_IN');
     },
 
     update(dt, world) {
       switch (state) {
-        case 'IDLE': {
-          timer += dt;
-          if (timer < 0) return;
-          bay = world.bays.acquire();
-          if (bay === null) return;
-          group.visible = true;
-          figure.visible = false;
-          follower.set(arrivalPath(layout, bay));
-          placeCar(follower.x, follower.z, -Math.PI / 2);
-          setState('APPROACHING');
-          return;
-        }
-
-        case 'APPROACHING': {
-          const moved = follower.step(dt, sim.speeds.car);
-          rollWheels(moved);
-          placeCar(follower.x, follower.z, follower.heading, dt);
-          if (follower.done) setState('PARKING');
-          return;
-        }
-
-        case 'PARKING': {
-          timer += dt;
-          if (timer < 0.4) return;
-          slot = world.firstFreeSlot();
-          if (slot === null) return;
-          const target = layout.queue.slots[slot];
-          const door = doorPosition(layout, bay);
-          // The turn-in easing may not have finished; square the car up.
-          car.rotation.y = bay.facing;
-          figure.visible = true;
-          follower.set(walkInPath(layout, bay, target));
-          placeFigure(door.x, door.z, layout.queue.facing);
-          setState('WALKING_IN');
-          return;
-        }
-
         case 'WALKING_IN': {
+          if (slot === null) {
+            slot = world.firstFreeSlot();
+            if (slot === null) return;
+            follower.set(walkInPath(layout, bay, layout.queue.slots[slot]));
+          }
           follower.step(dt, sim.speeds.walk);
-          placeFigure(follower.x, follower.z, follower.heading);
+          place(follower.x, follower.z, follower.heading);
           animateLegs(dt, !follower.done);
           if (follower.done) {
-            placeFigure(follower.x, follower.z, layout.queue.facing);
+            place(follower.x, follower.z, layout.queue.facing);
             setState(slot === 0 ? 'AT_COUNTER' : 'QUEUEING');
           }
           return;
@@ -233,14 +169,13 @@ export function createCustomer(materials, layout, { index }) {
           animateLegs(dt, !follower.done);
           if (!follower.done) {
             follower.step(dt, sim.speeds.walk);
-            placeFigure(follower.x, follower.z, follower.heading);
+            place(follower.x, follower.z, follower.heading);
             if (follower.done) {
-              placeFigure(follower.x, follower.z, layout.queue.facing);
+              place(follower.x, follower.z, layout.queue.facing);
               if (slot === 0) setState('AT_COUNTER');
             }
             return;
           }
-          // Shuffle forward whenever the slot ahead is free.
           const ahead = slot - 1;
           if (ahead >= 0 && world.isSlotFree(ahead)) {
             slot = ahead;
@@ -258,8 +193,7 @@ export function createCustomer(materials, layout, { index }) {
           timer += dt;
           if (timer >= sim.serveSeconds) {
             pizzaBox.visible = true;
-            const target = layout.queue.slots[slot];
-            follower.set(walkOutPath(layout, bay, target));
+            follower.set(walkOutPath(layout, bay, layout.queue.slots[slot]));
             slot = null;
             setState('WALKING_OUT');
           }
@@ -268,34 +202,12 @@ export function createCustomer(materials, layout, { index }) {
 
         case 'WALKING_OUT': {
           follower.step(dt, sim.speeds.walk);
-          placeFigure(follower.x, follower.z, follower.heading);
+          place(follower.x, follower.z, follower.heading);
           animateLegs(dt, !follower.done);
-          if (follower.done) setState('BOARDING');
-          return;
-        }
-
-        case 'BOARDING': {
-          animateLegs(dt, false);
-          timer += dt;
-          if (timer >= sim.boardSeconds) {
-            figure.visible = false;
-            pizzaBox.visible = false;
-            follower.set(departurePath(layout, bay));
-            setState('DEPARTING');
-          }
-          return;
-        }
-
-        case 'DEPARTING': {
-          const moved = follower.step(dt, sim.speeds.car);
-          rollWheels(moved);
-          placeCar(follower.x, follower.z, follower.heading, dt);
           if (follower.done) {
-            world.bays.release(bay);
-            bay = null;
             group.visible = false;
-            setState('IDLE');
-            timer = -sim.respawnDelay;
+            pizzaBox.visible = false;
+            setState('DONE');
           }
           return;
         }
@@ -305,6 +217,4 @@ export function createCustomer(materials, layout, { index }) {
       }
     },
   };
-
-  return customer;
 }

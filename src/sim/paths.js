@@ -8,27 +8,25 @@ export function doorPosition(layout, bay) {
   return { x: bay.x + layout.sim.walk.doorOffset, z: bay.z };
 }
 
-export function arrivalPath(layout, bay) {
-  const { lane } = layout.sim;
+export function lotEntryPath(layout, bay) {
   const P = layout.parking;
+  const laneZ = layout.ground.lanes[0].z;
   return [
-    { x: lane.enterX, z: lane.z },
-    { x: P.entrance.centreX, z: lane.z },
+    { x: P.entrance.centreX, z: laneZ },
     { x: P.entrance.centreX, z: P.aisle.centreZ },
     { x: bay.x, z: P.aisle.centreZ },
     { x: bay.x, z: bay.z },
   ];
 }
 
-export function departurePath(layout, bay) {
-  const { lane } = layout.sim;
+export function lotExitPath(layout, bay) {
   const P = layout.parking;
+  const laneZ = layout.ground.lanes[0].z;
   return [
     { x: bay.x, z: bay.z },
     { x: bay.x, z: P.aisle.centreZ, reverse: true },
     { x: P.exit.centreX, z: P.aisle.centreZ },
-    { x: P.exit.centreX, z: lane.z },
-    { x: lane.exitX, z: lane.z },
+    { x: P.exit.centreX, z: laneZ },
   ];
 }
 

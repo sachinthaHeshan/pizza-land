@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  arrivalPath,
-  departurePath,
+  lotEntryPath,
+  lotExitPath,
   walkInPath,
   walkOutPath,
   doorPosition,
@@ -40,34 +40,26 @@ function inSomeBay(point) {
 }
 
 describe('paths', () => {
-  it('enters from the road and stops in the bay', () => {
-    const path = arrivalPath(layout, rowA);
-    expect(path[0].x).toBe(layout.sim.lane.enterX);
-    expect(path[0].z).toBeCloseTo(layout.sim.lane.z, 5);
+  it('enters the lot from the kerb lane and stops in the bay', () => {
+    const path = lotEntryPath(layout, rowA);
+    expect(path[0].x).toBeCloseTo(layout.parking.entrance.centreX, 5);
+    expect(path[0].z).toBeCloseTo(layout.ground.lanes[0].z, 5);
     const last = path[path.length - 1];
     expect(last.x).toBeCloseTo(rowA.x, 5);
     expect(last.z).toBeCloseTo(rowA.z, 5);
   });
 
-  it('turns in through the entrance gap, never the exit', () => {
-    for (const bay of layout.sim.bays) {
-      const xs = arrivalPath(layout, bay).map((p) => p.x);
-      expect(xs).toContain(layout.parking.entrance.centreX);
-      expect(xs).not.toContain(layout.parking.exit.centreX);
-    }
-  });
-
-  it('backs out of the bay and leaves through the exit gap', () => {
-    const path = departurePath(layout, rowA);
+  it('leaves the bay through the exit gap onto the kerb lane', () => {
+    const path = lotExitPath(layout, rowA);
     expect(path[0].z).toBeCloseTo(rowA.z, 5);
     expect(path[1].reverse).toBe(true);
-    expect(path.some((p) => Math.abs(p.x - layout.parking.exit.centreX) < 1e-9)).toBe(true);
-    expect(path[path.length - 1].x).toBe(layout.sim.lane.exitX);
+    expect(path[path.length - 1].x).toBeCloseTo(layout.parking.exit.centreX, 5);
+    expect(path[path.length - 1].z).toBeCloseTo(layout.ground.lanes[0].z, 5);
   });
 
   it('keeps every driving waypoint on the lot, a gap, or the road', () => {
     for (const bay of layout.sim.bays) {
-      for (const point of [...arrivalPath(layout, bay), ...departurePath(layout, bay)]) {
+      for (const point of [...lotEntryPath(layout, bay), ...lotExitPath(layout, bay)]) {
         expect(onDrivable(point), `(${point.x}, ${point.z})`).toBe(true);
       }
     }
@@ -112,8 +104,8 @@ describe('paths', () => {
 
   it('gives every path a positive length', () => {
     for (const bay of layout.sim.bays) {
-      expect(pathLength(arrivalPath(layout, bay))).toBeGreaterThan(0);
-      expect(pathLength(departurePath(layout, bay))).toBeGreaterThan(0);
+      expect(pathLength(lotEntryPath(layout, bay))).toBeGreaterThan(0);
+      expect(pathLength(lotExitPath(layout, bay))).toBeGreaterThan(0);
       expect(pathLength(walkInPath(layout, bay, slot))).toBeGreaterThan(0);
     }
   });

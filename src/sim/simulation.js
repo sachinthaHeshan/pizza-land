@@ -1,27 +1,20 @@
 import * as THREE from 'three';
-import { createCustomer } from './customer.js';
-import { createPool } from './pool.js';
+import { createPedestrian } from './pedestrian.js';
 
 export function createSimulation(materials, layout) {
   const group = new THREE.Group();
   group.name = 'simulation';
 
-  const bays = createPool(layout.sim.bays);
-  const customers = [];
-
+  const pedestrians = [];
   for (let i = 0; i < layout.sim.pedestrians; i++) {
-    const customer = createCustomer(materials, layout, { index: i });
-    customer.start(i * layout.sim.spawnGap);
-    customers.push(customer);
-    group.add(customer.group);
+    const pedestrian = createPedestrian(materials, layout, { index: i });
+    pedestrians.push(pedestrian);
+    group.add(pedestrian.group);
   }
 
-  // Slot ownership is read straight off the agents, so there is exactly one
-  // source of truth for who stands where.
   const world = {
-    bays,
     isSlotFree(slotIndex) {
-      return !customers.some((c) => c.slot === slotIndex);
+      return !pedestrians.some((p) => p.slot === slotIndex);
     },
     firstFreeSlot() {
       for (let i = 0; i < layout.queue.slots.length; i++) {
@@ -33,9 +26,10 @@ export function createSimulation(materials, layout) {
 
   return {
     group,
-    customers,
+    pedestrians,
+    world,
     update(dt) {
-      for (const customer of customers) customer.update(dt, world);
+      for (const pedestrian of pedestrians) pedestrian.update(dt, world);
     },
   };
 }
