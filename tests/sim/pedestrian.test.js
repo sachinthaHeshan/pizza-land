@@ -10,7 +10,8 @@ const bay = layout.sim.bays[0];
 function world() {
   return {
     isSlotFree: () => true,
-    firstFreeSlot: () => 1,
+    queueLength: () => 1,
+    enqueueSlot: () => 1,
   };
 }
 

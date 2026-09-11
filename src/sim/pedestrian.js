@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createFigure } from '../models/figure.js';
 import { createPizzaBox } from '../models/pizzaBox.js';
-import { walkInPath, walkOutPath, doorPosition } from './paths.js';
+import { walkInPath, walkOutPath, doorPosition, slotPosition } from './paths.js';
 
 export const PEDESTRIAN_STATES = Object.freeze([
   'IDLE',
@@ -28,6 +28,21 @@ function createFollower() {
       this.x = path[0].x;
       this.z = path[0].z;
       this.done = path.length < 2;
+    },
+
+    // Steer the remaining destination without sending the walker back to
+    // the start of the path. Unchanged targets are left alone so a walker
+    // can actually arrive.
+    retarget(dest, plazaZ) {
+      if (!this.path || this.path.length < 2) return;
+      const last = this.path[this.path.length - 1];
+      if (Math.abs(last.x - dest[0]) < 1e-6 && Math.abs(last.z - dest[1]) < 1e-6) return;
+      this.path[this.path.length - 1] = { x: dest[0], z: dest[1] };
+      if (this.path.length >= 4) {
+        this.path[this.path.length - 2] = { x: dest[0], z: plazaZ };
+      }
+      if (this.index >= this.path.length) this.index = this.path.length - 1;
+      this.done = false;
     },
 
     step(dt, speed) {
@@ -142,23 +157,37 @@ export function createPedestrian(materials, layout, { index }) {
       slot = null;
       pizzaBox.visible = false;
       group.visible = true;
+      follower.path = null;
+      follower.done = true;
       const door = doorPosition(layout, bay);
       place(door.x, door.z, layout.queue.facing);
       setState('WALKING_IN');
     },
 
+    reassignSlot(next) {
+      if (slot === next) return;
+      slot = next;
+      if (state === 'WALKING_IN' || state === 'QUEUEING') {
+        follower.retarget(slotPosition(layout, slot), sim.walk.plazaZ);
+      }
+    },
+
     update(dt, world) {
       switch (state) {
         case 'WALKING_IN': {
-          if (slot === null) {
-            slot = world.firstFreeSlot();
-            if (slot === null) return;
-            follower.set(walkInPath(layout, bay, layout.queue.slots[slot]));
+          // Join the line only on arrival. Holding a slot from the car lets
+          // a slow walker keep a place in front of people already queued.
+          const tail = slotPosition(layout, world.queueLength());
+          if (!follower.path) {
+            follower.set(walkInPath(layout, bay, tail));
+          } else {
+            follower.retarget(tail, sim.walk.plazaZ);
           }
           follower.step(dt, sim.speeds.walk);
           place(follower.x, follower.z, follower.heading);
           animateLegs(dt, !follower.done);
           if (follower.done) {
+            slot = world.enqueueSlot();
             place(follower.x, follower.z, layout.queue.facing);
             setState(slot === 0 ? 'AT_COUNTER' : 'QUEUEING');
           }
@@ -179,7 +208,7 @@ export function createPedestrian(materials, layout, { index }) {
           const ahead = slot - 1;
           if (ahead >= 0 && world.isSlotFree(ahead)) {
             slot = ahead;
-            const target = layout.queue.slots[slot];
+            const target = slotPosition(layout, slot);
             follower.set([
               { x: figure.position.x, z: figure.position.z },
               { x: target[0], z: target[1] },
@@ -193,7 +222,7 @@ export function createPedestrian(materials, layout, { index }) {
           timer += dt;
           if (timer >= sim.serveSeconds) {
             pizzaBox.visible = true;
-            follower.set(walkOutPath(layout, bay, layout.queue.slots[slot]));
+            follower.set(walkOutPath(layout, bay, slotPosition(layout, slot)));
             slot = null;
             setState('WALKING_OUT');
           }

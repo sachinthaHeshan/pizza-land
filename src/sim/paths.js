@@ -8,6 +8,17 @@ export function doorPosition(layout, bay) {
   return { x: bay.x + layout.sim.walk.doorOffset, z: bay.z };
 }
 
+// Marked slots first; anyone past that stands on the same line behind the
+// last person so they walk to the queue instead of waiting at the car.
+export function slotPosition(layout, index) {
+  const slots = layout.queue.slots;
+  if (index < slots.length) return slots[index];
+  const last = slots[slots.length - 1];
+  const prev = slots[slots.length - 2];
+  const extra = index - (slots.length - 1);
+  return [last[0] + (last[0] - prev[0]) * extra, last[1] + (last[1] - prev[1]) * extra];
+}
+
 export function lotEntryPath(layout, bay) {
   const P = layout.parking;
   const laneZ = layout.ground.lanes[0].z;

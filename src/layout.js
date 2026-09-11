@@ -183,8 +183,8 @@ export const layout = {
 
   sim: {
     // One per bay, so the lot itself is what fills up rather than the
-    // pedestrian pool. More pedestrians than queue slots is fine: one that
-    // finds no free slot simply waits beside its car until the queue moves.
+    // pedestrian pool. More pedestrians than marked queue slots just join
+    // behind the last person in line rather than waiting at the car.
     pedestrians: 8,
     spawnGap: 9.0,
     respawnDelay: 2.0,

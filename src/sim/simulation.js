@@ -19,13 +19,26 @@ export function createSimulation(materials, layout, { horn } = {}) {
     isSlotFree(slotIndex) {
       return !pedestrians.some((p) => p.slot === slotIndex);
     },
-    firstFreeSlot() {
-      for (let i = 0; i < layout.queue.slots.length; i++) {
-        if (world.isSlotFree(i)) return i;
+    queueLength() {
+      return pedestrians.filter((p) => p.slot !== null).length;
+    },
+    // FIFO: a slot is claimed when the person reaches the line, behind
+    // whoever is already standing there.
+    enqueueSlot() {
+      let last = -1;
+      for (const pedestrian of pedestrians) {
+        if (pedestrian.slot !== null && pedestrian.slot > last) last = pedestrian.slot;
       }
-      return null;
+      return last + 1;
     },
   };
+
+  function compactQueue() {
+    const holders = pedestrians
+      .filter((p) => p.slot !== null)
+      .sort((a, b) => a.slot - b.slot);
+    holders.forEach((p, i) => p.reassignSlot(i));
+  }
 
   // Pedestrians go through a pool rather than a scan for an IDLE one. A
   // vehicle claims its passenger on approach but only calls start() once it
@@ -48,6 +61,7 @@ export function createSimulation(materials, layout, { horn } = {}) {
     world,
     update(dt) {
       traffic.update(dt);
+      compactQueue();
       for (const pedestrian of pedestrians) pedestrian.update(dt, world);
     },
   };

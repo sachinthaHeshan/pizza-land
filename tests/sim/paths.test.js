@@ -5,6 +5,7 @@ import {
   walkInPath,
   walkOutPath,
   doorPosition,
+  slotPosition,
   pathLength,
 } from '../../src/sim/paths.js';
 import { layout } from '../../src/layout.js';
@@ -112,5 +113,16 @@ describe('paths', () => {
 
   it('measures length as the sum of its segments', () => {
     expect(pathLength([{ x: 0, z: 0 }, { x: 3, z: 4 }, { x: 3, z: 8 }])).toBeCloseTo(9, 6);
+  });
+
+  it('extends overflow slots along the same line as the marked queue', () => {
+    const marked = layout.queue.slots;
+    expect(slotPosition(layout, 0)).toEqual(marked[0]);
+    expect(slotPosition(layout, marked.length - 1)).toEqual(marked[marked.length - 1]);
+    const extra = slotPosition(layout, marked.length);
+    const last = marked[marked.length - 1];
+    const prev = marked[marked.length - 2];
+    expect(extra[0] - last[0]).toBeCloseTo(last[0] - prev[0], 5);
+    expect(extra[1] - last[1]).toBeCloseTo(last[1] - prev[1], 5);
   });
 });
