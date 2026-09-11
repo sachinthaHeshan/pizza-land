@@ -6,21 +6,23 @@ export const layout = {
 
   ground: {
     // A base apron sits under everything so no gap of sky shows around the lot.
-    apron: { x: [-52, 52], z: [-16, 46], y: -0.2 },
-    road: { x: [-52, 52], z: [26.5, 40.5], y: -0.15 },
+    apron: { x: [-80, 80], z: [-65, 95], y: -0.2 },
+    road: { x: [-80, 80], z: [26.5, 40.5], y: -0.15 },
     kerbs: [
       // Sidewalk down to the parking lot.
-      { x: [-52, 52], z: [10.5, 10.9], y: [-0.15, 0] },
+      { x: [-80, 80], z: [10.5, 10.9], y: [-0.15, 0] },
       // Far side of the road.
-      { x: [-52, 52], z: [40.5, 40.9], y: [-0.15, 0] },
+      { x: [-80, 80], z: [40.5, 40.9], y: [-0.15, 0] },
     ],
     sidewalk: [
-      { x: [-52, 52], z: [8, 10.5] },
+      { x: [-80, 80], z: [8, 10.5] },
       { x: [-24, -11], z: [-8, 8] },
-      { x: [-52, 52], z: [40.9, 46] },
+      { x: [-80, 80], z: [40.9, 95] },
+      // Paving behind the shop, so the other isometric axis has ground to pan.
+      { x: [-80, 80], z: [-65, -8] },
       // Paving either side of the parking lot.
-      { x: [-52, -8.5], z: [10.9, 26.5] },
-      { x: [8.5, 52], z: [10.9, 26.5] },
+      { x: [-80, -8.5], z: [10.9, 26.5] },
+      { x: [8.5, 80], z: [10.9, 26.5] },
     ],
     plaza: [
       { x: [-11, -3], z: [2, 8] },
@@ -47,7 +49,7 @@ export const layout = {
       width: 0.14,
       dash: 2.2,
       gap: 1.8,
-      x: [-52, 52],
+      x: [-80, 80],
     },
   },
 
@@ -65,7 +67,7 @@ export const layout = {
     island: { z: [24.0, 26.5], kerbHeight: 0.18, bedInset: 0.35 },
     entrance: { x: [5.0, 8.5], centreX: 6.75 },
     exit: { x: [-8.5, -5.0], centreX: -6.75 },
-    segments: [{ x: [-52, -8.5] }, { x: [-5.0, 5.0] }, { x: [8.5, 52] }],
+    segments: [{ x: [-80, -8.5] }, { x: [-5.0, 5.0] }, { x: [8.5, 80] }],
     walkwayX: 0,
     lineWidth: 0.12,
     sidewalkZ: 10.2,
@@ -293,7 +295,7 @@ export const layout = {
     seed: 20260910,
     perLane: 6,
     spawnGap: 14,
-    spawnX: 40,
+    spawnX: 68,
     // High enough that the lot genuinely fills and cars have to wait. At the
     // originally specced 0.18 the honking never once triggered in a ten-minute
     // run; the lot peaked at five of eight bays. Measured: 0.6 is where it
@@ -371,8 +373,8 @@ export const layout = {
   },
 
   envelopes: {
-    ground: { min: [-52, -0.25, -16], max: [52, 0.1, 46] },
-    parking: { min: [-52, -0.2, 10.5], max: [52, 0.6, 26.6] },
+    ground: { min: [-80, -0.25, -65], max: [80, 0.1, 95] },
+    parking: { min: [-80, -0.2, 10.5], max: [80, 0.6, 26.6] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
     diningWing: { min: [-11.4, 0, -8.4], max: [-2.8, 2.3, 2.2] },
     storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.2, 3.6] },
@@ -381,7 +383,7 @@ export const layout = {
     counter: { min: [-1.2, 0, 1.3], max: [5.2, 1.2, 4.6] },
     sideWing: { min: [4.8, 0, 1.8], max: [9.4, 2.4, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
-    simulation: { min: [-46, 0, 4], max: [46, 2.2, 42] },
-    traffic: { min: [-52, 0, 25], max: [52, 3.4, 42] },
+    simulation: { min: [-74, 0, 4], max: [74, 2.2, 42] },
+    traffic: { min: [-80, 0, 25], max: [80, 3.4, 42] },
   },
 };

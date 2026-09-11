@@ -17,6 +17,40 @@ function overlaps(a, b) {
 }
 
 describe('layout', () => {
+  it('stretches the ground 160 m along z so the other isometric axis can be panned', () => {
+    const z = [-65, 95];
+    expect(layout.ground.apron.z).toEqual(z);
+    expect(layout.envelopes.ground.min[2]).toBe(-65);
+    expect(layout.envelopes.ground.max[2]).toBe(95);
+    const farWalk = layout.ground.sidewalk.find((r) => r.z[0] === 40.9);
+    expect(farWalk.z[1]).toBe(95);
+    const backWalk = layout.ground.sidewalk.find((r) => r.z[0] === -65);
+    expect(backWalk.z[1]).toBe(-8);
+    expect(backWalk.x).toEqual([-80, 80]);
+  });
+
+  it('stretches the ground 160 m along x so the road can be panned', () => {
+    const x = [-80, 80];
+    expect(layout.ground.apron.x).toEqual(x);
+    expect(layout.ground.road.x).toEqual(x);
+    expect(layout.ground.laneMarks.x).toEqual(x);
+    for (const kerb of layout.ground.kerbs) expect(kerb.x).toEqual(x);
+    expect(layout.parking.segments[0].x[0]).toBe(-80);
+    expect(layout.parking.segments.at(-1).x[1]).toBe(80);
+    expect(layout.envelopes.ground.min[0]).toBe(-80);
+    expect(layout.envelopes.ground.max[0]).toBe(80);
+    expect(layout.envelopes.parking.min[0]).toBe(-80);
+    expect(layout.envelopes.parking.max[0]).toBe(80);
+    expect(layout.envelopes.traffic.min[0]).toBe(-80);
+    expect(layout.envelopes.traffic.max[0]).toBe(80);
+  });
+
+  it('spawns traffic just inside the new road ends', () => {
+    expect(layout.traffic.spawnX).toBe(68);
+    expect(layout.traffic.spawnX).toBeLessThan(layout.ground.road.x[1]);
+    expect(-layout.traffic.spawnX).toBeGreaterThan(layout.ground.road.x[0]);
+  });
+
   it('gives every envelope a positive span on all three axes', () => {
     for (const [name, env] of Object.entries(layout.envelopes)) {
       for (let axis = 0; axis < 3; axis++) {

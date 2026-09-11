@@ -71,6 +71,7 @@ describe('main.js render loop', () => {
     expect(source).toMatch(/import \{ panTargetLimits, clampPanTarget \} from ["']\.\/ui\/panBounds\.js["']/);
     expect(source).toMatch(/clampPan\(\)/);
     expect(source).toMatch(/layout\.envelopes\.ground/);
+    expect(source).toMatch(/controls\.screenSpacePanning\s*=\s*false/);
   });
 
   it('renders and schedules the next frame', () => {

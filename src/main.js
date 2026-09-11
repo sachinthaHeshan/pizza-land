@@ -56,7 +56,9 @@ controls.enablePan = true;
 controls.enableZoom = true;
 controls.minZoom = c.minZoom;
 controls.maxZoom = c.maxZoom;
-controls.screenSpacePanning = true;
+// Pan in the ground plane. Screen-space panning follows camera-up, which
+// lifts the target off the map so the top/bottom limits never engage.
+controls.screenSpacePanning = false;
 controls.mouseButtons = {
   LEFT: THREE.MOUSE.PAN,
   MIDDLE: THREE.MOUSE.DOLLY,
@@ -69,12 +71,19 @@ controls.touches = {
 controls.target.copy(target);
 
 function clampPan() {
+  // Restore height before measuring the ground intersection. A leftover
+  // screen-space pan would otherwise tilt the unprojected parallelogram.
+  const dy = target.y - controls.target.y;
+  if (dy !== 0) {
+    controls.target.y = target.y;
+    camera.position.y += dy;
+  }
   const limits = panTargetLimits({
-    frustumSize: c.frustumSize,
-    zoom: camera.zoom,
-    aspect: window.innerWidth / window.innerHeight,
+    camera,
+    target: controls.target,
     bounds: layout.envelopes.ground,
     padding: c.panPadding ?? 0,
+    preferred: { x: target.x, y: target.y, z: target.z },
   });
   clampPanTarget(controls.target, camera.position, limits);
 }

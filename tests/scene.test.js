@@ -53,8 +53,10 @@ describe('createShop', () => {
 
   it('keeps every part inside the lot plus its street apron', () => {
     const bounds = boundsOf(shop);
-    expect(bounds.min.x).toBeGreaterThanOrEqual(-52.01);
-    expect(bounds.max.x).toBeLessThanOrEqual(52.01);
+    const [minX, ,] = layout.envelopes.ground.min;
+    const [maxX, ,] = layout.envelopes.ground.max;
+    expect(bounds.min.x).toBeGreaterThanOrEqual(minX - 0.01);
+    expect(bounds.max.x).toBeLessThanOrEqual(maxX + 0.01);
   });
 
   // The first sell marker sat on the floor behind the counter, where the
