@@ -7,6 +7,7 @@ import { createShop } from "./scene.js";
 import { layout } from "./layout.js";
 import { createHorn } from "./sim/audio.js";
 import { nextSimSpeed, labelSimSpeed } from "./sim/speed.js";
+import { panTargetLimits, clampPanTarget } from "./ui/panBounds.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -50,8 +51,33 @@ camera.lookAt(target);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.enableRotate = true;
+controls.enableRotate = false;
+controls.enablePan = true;
+controls.enableZoom = true;
+controls.minZoom = c.minZoom;
+controls.maxZoom = c.maxZoom;
+controls.screenSpacePanning = true;
+controls.mouseButtons = {
+  LEFT: THREE.MOUSE.PAN,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+};
+controls.touches = {
+  ONE: THREE.TOUCH.PAN,
+  TWO: THREE.TOUCH.DOLLY_PAN,
+};
 controls.target.copy(target);
+
+function clampPan() {
+  const limits = panTargetLimits({
+    frustumSize: c.frustumSize,
+    zoom: camera.zoom,
+    aspect: window.innerWidth / window.innerHeight,
+    bounds: layout.envelopes.ground,
+    padding: c.panPadding ?? 0,
+  });
+  clampPanTarget(controls.target, camera.position, limits);
+}
 
 function resize() {
   const aspect = window.innerWidth / window.innerHeight;
@@ -62,6 +88,7 @@ function resize() {
   camera.bottom = -half;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  clampPan();
 }
 resize();
 window.addEventListener("resize", resize);
@@ -81,6 +108,7 @@ function resetView() {
   camera.zoom = 1;
   camera.updateProjectionMatrix();
   controls.target.copy(target);
+  clampPan();
   controls.update();
   controls.enableDamping = damping;
 }
@@ -120,6 +148,7 @@ function animate() {
   shop.userData.simulation.update(delta * simSpeed);
   balanceLabel.textContent = `$${shop.userData.simulation.balance}`;
   controls.update();
+  clampPan();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }

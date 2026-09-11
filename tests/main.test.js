@@ -52,6 +52,20 @@ describe('main.js render loop', () => {
     expect(source).toMatch(/fireLight\.intensity/);
   });
 
+  it('locks the isometric angle and limits zoom while allowing pan', () => {
+    expect(source).toMatch(/controls\.enableRotate\s*=\s*false/);
+    expect(source).toMatch(/controls\.enablePan\s*=\s*true/);
+    expect(source).toMatch(/controls\.minZoom\s*=\s*c\.minZoom/);
+    expect(source).toMatch(/controls\.maxZoom\s*=\s*c\.maxZoom/);
+    expect(source).toMatch(/THREE\.MOUSE\.PAN/);
+  });
+
+  it('clamps panning to the ground envelope', () => {
+    expect(source).toMatch(/import \{ panTargetLimits, clampPanTarget \} from ["']\.\/ui\/panBounds\.js["']/);
+    expect(source).toMatch(/clampPan\(\)/);
+    expect(source).toMatch(/layout\.envelopes\.ground/);
+  });
+
   it('renders and schedules the next frame', () => {
     expect(source).toMatch(/renderer\.render\(scene, camera\)/);
     expect(source).toMatch(/requestAnimationFrame\(animate\)/);

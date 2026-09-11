@@ -1,5 +1,5 @@
 export const layout = {
-  units: 'meters',
+  units: "meters",
   // Small lifts that keep coplanar surfaces from fighting in the depth buffer.
   surfaceEps: 0.02,
   floorContact: 0.01,
@@ -65,11 +65,7 @@ export const layout = {
     island: { z: [24.0, 26.5], kerbHeight: 0.18, bedInset: 0.35 },
     entrance: { x: [5.0, 8.5], centreX: 6.75 },
     exit: { x: [-8.5, -5.0], centreX: -6.75 },
-    segments: [
-      { x: [-52, -8.5] },
-      { x: [-5.0, 5.0] },
-      { x: [8.5, 52] },
-    ],
+    segments: [{ x: [-52, -8.5] }, { x: [-5.0, 5.0] }, { x: [8.5, 52] }],
     walkwayX: 0,
     lineWidth: 0.12,
     sidewalkZ: 10.2,
@@ -79,11 +75,16 @@ export const layout = {
 
   perimeter: {
     runs: [
-      { axis: 'x', z: -8, x: [-11, 9] },
+      { axis: "x", z: -8, x: [-11, 9] },
       // Meets the side-wing east face at its inner edge (z = 2 − t/2).
-      { axis: 'z', x: 9, z: [-8, 1.85] },
+      { axis: "z", x: 9, z: [-8, 1.85] },
     ],
-    pillars: [[-11, -8], [9, -8], [9, 6], [-11, 2]],
+    pillars: [
+      [-11, -8],
+      [9, -8],
+      [9, 6],
+      [-11, 2],
+    ],
     pillarSize: 0.7,
     pillarHeight: 1.5,
     pillarCapWidth: 0.82,
@@ -91,9 +92,22 @@ export const layout = {
 
   kitchen: {
     tileWall: { x: [-3, 6], z: -8, y: [1.2, 3.2], thickness: 0.12 },
-    backCounter: { x: [-3, 6], z: [-7.8, -6.8], height: 0.9, lip: 0.04, shelfY: 0.25 },
+    backCounter: {
+      x: [-3, 6],
+      z: [-7.8, -6.8],
+      height: 0.9,
+      lip: 0.04,
+      shelfY: 0.25,
+    },
     island: { x: [-1.5, 3.5], z: [-5.2, -3.6], height: 0.9, shelfY: 0.25 },
-    wallShelf: { x: [0, 5], z: -7.9, depth: 0.4, y: 2.0, railY: 1.85, thickness: 0.06 },
+    wallShelf: {
+      x: [0, 5],
+      z: -7.9,
+      depth: 0.4,
+      y: 2.0,
+      railY: 1.85,
+      thickness: 0.06,
+    },
   },
 
   diningWing: {
@@ -104,7 +118,14 @@ export const layout = {
     west: { x: -11, z: [-8, 2] },
     north: { z: -6, x: [-11, -3] },
     partition: { x: -3, z: [-6, 2], door: [-1, 0.2], lintelY: 2.1 },
-    windows: { sill: 1.1, head: 2.6, bays: [[-5.3, -3.1], [-2.1, 0.1]] },
+    windows: {
+      sill: 1.1,
+      head: 2.6,
+      bays: [
+        [-5.3, -3.1],
+        [-2.1, 0.1],
+      ],
+    },
   },
 
   storefront: {
@@ -117,7 +138,13 @@ export const layout = {
     posts: [-10.8, -8.6, -6.2, -4.6, -3.2],
     postSize: 0.22,
     door: { x: [-6.2, -4.6] },
-    awning: { x: [-11, -3.4], wallY: 2.9, frontY: 2.45, frontZ: 3.3, valance: 0.25 },
+    awning: {
+      x: [-11, -3.4],
+      wallY: 2.9,
+      frontY: 2.45,
+      frontZ: 3.3,
+      valance: 0.25,
+    },
     sign: { x: [-8.8, -4.2], y: [3.0, 4.1], thickness: 0.18, archRise: 0.45 },
     lamps: { xs: [-9.5, -4.0], y: 3.1, reach: 0.55, shadeRadius: 0.28 },
   },
@@ -134,7 +161,14 @@ export const layout = {
     base: { x: [5.6, 8.8], z: [-6.4, -3.2], y: [0, 1.0] },
     cap: [1.0, 1.15],
     dome: { center: [7.2, 1.15, -4.8], radius: 1.55, scaleY: 0.95 },
-    mouth: { x: 5.65, width: 1.1, height: 0.85, sill: 1.15, recess: 0.6, frameDepth: 0.22 },
+    mouth: {
+      x: 5.65,
+      width: 1.1,
+      height: 0.85,
+      sill: 1.15,
+      recess: 0.6,
+      frameDepth: 0.22,
+    },
     chimney: { center: [7.9, -5.6], size: 0.7, y: [2.4, 4.3] },
     flue: { radius: 0.28, y: [4.3, 5.0], capRadius: 0.36 },
   },
@@ -154,7 +188,11 @@ export const layout = {
   queue: {
     facing: Math.PI,
     barrier: {
-      posts: [[2.8, 4.9], [2.8, 6.3], [2.8, 7.7]],
+      posts: [
+        [2.8, 4.9],
+        [2.8, 6.3],
+        [2.8, 7.7],
+      ],
       height: 0.95,
       postRadius: 0.055,
       baseRadius: 0.17,
@@ -174,9 +212,9 @@ export const layout = {
       z: 3.0,
       facing: 0,
       height: 1.66,
-      cloth: 'clothRed',
-      hair: 'hairDark',
-      skin: 'skin',
+      cloth: "clothRed",
+      hair: "hairDark",
+      skin: "skin",
       cap: true,
     },
   },
@@ -205,13 +243,30 @@ export const layout = {
       { x: 3.9, z: 13.3, facing: Math.PI, row: 0 },
       { x: -1.3, z: 21.7, facing: 0, row: 1 },
     ],
-    car: { length: 4.2, width: 1.8, height: 1.55, colours: ['carGreen', 'carRed', 'carBlue'] },
+    car: {
+      length: 4.2,
+      width: 1.8,
+      height: 1.55,
+      colours: ["carGreen", "carRed", "carBlue"],
+    },
     walk: { doorOffset: 1.1, sidewalkZ: 10.2, plazaZ: 8.6 },
     stride: { frequency: 5.2, amplitude: 0.52, armScale: 0.7 },
     people: [
-      { height: 1.72, cloth: 'clothBlue', hair: 'hairDark', skin: 'skin' },
-      { height: 1.66, cloth: 'clothPink', hair: 'hairDark', skin: 'skinDeep', longHair: true },
-      { height: 1.62, cloth: 'clothYellow', hair: 'hairLight', skin: 'skin', longHair: true },
+      { height: 1.72, cloth: "clothBlue", hair: "hairDark", skin: "skin" },
+      {
+        height: 1.66,
+        cloth: "clothPink",
+        hair: "hairDark",
+        skin: "skinDeep",
+        longHair: true,
+      },
+      {
+        height: 1.62,
+        cloth: "clothYellow",
+        hair: "hairLight",
+        skin: "skin",
+        longHair: true,
+      },
     ],
   },
 
@@ -237,19 +292,37 @@ export const layout = {
     hornInterval: 1.2,
     types: [
       {
-        key: 'car', model: 'car', share: 0.70, cruise: 9.0,
-        length: 4.2, width: 1.8, height: 1.55, wantsPizza: true,
-        colours: ['carGreen', 'carRed', 'carBlue'],
+        key: "car",
+        model: "car",
+        share: 0.7,
+        cruise: 9.0,
+        length: 4.2,
+        width: 1.8,
+        height: 1.55,
+        wantsPizza: true,
+        colours: ["carGreen", "carRed", "carBlue"],
       },
       {
-        key: 'van', model: 'van', share: 0.22, cruise: 8.0,
-        length: 5.2, width: 2.0, height: 2.3, wantsPizza: false,
-        colours: ['vanBody'],
+        key: "van",
+        model: "van",
+        share: 0.22,
+        cruise: 8.0,
+        length: 5.2,
+        width: 2.0,
+        height: 2.3,
+        wantsPizza: false,
+        colours: ["vanBody"],
       },
       {
-        key: 'bus', model: 'bus', share: 0.08, cruise: 7.0,
-        length: 9.0, width: 2.4, height: 3.0, wantsPizza: false,
-        colours: ['busBody'],
+        key: "bus",
+        model: "bus",
+        share: 0.08,
+        cruise: 7.0,
+        length: 9.0,
+        width: 2.4,
+        height: 3.0,
+        wantsPizza: false,
+        colours: ["busBody"],
       },
     ],
   },
@@ -270,9 +343,12 @@ export const layout = {
 
   camera: {
     frustumSize: 34,
-    direction: [1, 0.82, 1],
+    direction: [-1, 0.82, 1],
     distance: 60,
     target: [0, 1.2, 13],
+    minZoom: 1,
+    maxZoom: 2,
+    panPadding: 0,
   },
 
   envelopes: {
