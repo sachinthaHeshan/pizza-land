@@ -12,6 +12,7 @@ function world() {
     isSlotFree: () => true,
     queueLength: () => 1,
     enqueueSlot: () => 1,
+    recordSale() {},
   };
 }
 
@@ -64,6 +65,18 @@ describe('createPedestrian', () => {
       if (['IDLE', 'WALKING_IN', 'QUEUEING'].includes(p.state)) expect(p.hasBox).toBe(false);
       if (p.state === 'WALKING_OUT') expect(p.hasBox).toBe(true);
     });
+  });
+
+  it('records a sale when the pizza is handed over', () => {
+    let sales = 0;
+    const w = world();
+    w.recordSale = () => sales++;
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    run(p, w, 90, 1 / 60, () => {
+      if (['WALKING_IN', 'QUEUEING', 'AT_COUNTER'].includes(p.state)) expect(sales).toBe(0);
+    });
+    expect(sales).toBe(1);
   });
 
   it('never teleports', () => {

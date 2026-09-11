@@ -15,6 +15,9 @@ export function createSimulation(materials, layout, { horn } = {}) {
     group.add(pedestrian.group);
   }
 
+  const PIZZA_PRICE = 5;
+  let balance = 0;
+
   const world = {
     isSlotFree(slotIndex) {
       return !pedestrians.some((p) => p.slot === slotIndex);
@@ -30,6 +33,9 @@ export function createSimulation(materials, layout, { horn } = {}) {
         if (pedestrian.slot !== null && pedestrian.slot > last) last = pedestrian.slot;
       }
       return last + 1;
+    },
+    recordSale() {
+      balance += PIZZA_PRICE;
     },
   };
 
@@ -59,6 +65,9 @@ export function createSimulation(materials, layout, { horn } = {}) {
     pedestrians,
     traffic,
     world,
+    get balance() {
+      return balance;
+    },
     update(dt) {
       traffic.update(dt);
       compactQueue();

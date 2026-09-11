@@ -13,6 +13,19 @@ describe('createSimulation', () => {
     expect(sim.pedestrians).toHaveLength(layout.sim.pedestrians);
   });
 
+  it('starts with a $0 balance', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    expect(sim.balance).toBe(0);
+  });
+
+  it('adds $5 each time a pizza is sold at the counter', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.world.recordSale();
+    expect(sim.balance).toBe(5);
+    sim.world.recordSale();
+    expect(sim.balance).toBe(10);
+  });
+
   it('keeps every pedestrian in a valid state while traffic runs', () => {
     const sim = createSimulation(stubMaterials(), layout);
     const valid = ['IDLE', 'WALKING_IN', 'QUEUEING', 'AT_COUNTER', 'WALKING_OUT', 'DONE'];

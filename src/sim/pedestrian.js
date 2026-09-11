@@ -222,6 +222,7 @@ export function createPedestrian(materials, layout, { index }) {
           timer += dt;
           if (timer >= sim.serveSeconds) {
             pizzaBox.visible = true;
+            world.recordSale();
             follower.set(walkOutPath(layout, bay, slotPosition(layout, slot)));
             slot = null;
             setState('WALKING_OUT');

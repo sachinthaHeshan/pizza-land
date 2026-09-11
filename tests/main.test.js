@@ -11,6 +11,10 @@ const source = readFileSync(
   fileURLToPath(new URL('../src/main.js', import.meta.url)),
   'utf8'
 );
+const html = readFileSync(
+  fileURLToPath(new URL('../index.html', import.meta.url)),
+  'utf8'
+);
 
 describe('main.js render loop', () => {
   it('advances the simulation every frame', () => {
@@ -28,6 +32,15 @@ describe('main.js render loop', () => {
     expect(source).toMatch(/speedButton\.addEventListener\('click'/);
     expect(source).toMatch(/simSpeed = nextSimSpeed\(simSpeed\)/);
     expect(source).toMatch(/speedButton\.textContent = labelSimSpeed\(simSpeed\)/);
+  });
+
+  it('paints the money balance onto a top-right HUD label each frame', () => {
+    expect(html).toMatch(/id="balance"/);
+    expect(html).toMatch(/#balance[\s\S]*top:\s*16px/);
+    expect(html).toMatch(/#balance[\s\S]*right:\s*16px/);
+    expect(source).toMatch(/document\.getElementById\(['"]balance['"]\)/);
+    expect(source).toMatch(/balanceLabel\.textContent/);
+    expect(source).toMatch(/simulation\.balance/);
   });
 
   it('clamps the delta so a backgrounded tab cannot fast-forward the cycle', () => {

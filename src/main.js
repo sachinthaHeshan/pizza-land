@@ -103,6 +103,8 @@ speedButton.addEventListener('click', () => {
   speedButton.textContent = labelSimSpeed(simSpeed);
 });
 
+const balanceLabel = document.getElementById('balance');
+
 const fireLight = shop.userData.fireLight;
 const baseIntensity = fireLight.userData.baseIntensity;
 const clock = new THREE.Clock();
@@ -116,6 +118,7 @@ function animate() {
   fireLight.intensity =
     baseIntensity * (0.86 + 0.14 * Math.sin(t * 9.3) * Math.sin(t * 3.1));
   shop.userData.simulation.update(delta * simSpeed);
+  balanceLabel.textContent = `$${shop.userData.simulation.balance}`;
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
