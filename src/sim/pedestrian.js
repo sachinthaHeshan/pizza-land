@@ -130,7 +130,7 @@ export function createPedestrian(materials, layout, { index }) {
     }
   }
 
-  return {
+  const pedestrian = {
     group,
     figure,
 
@@ -146,6 +146,14 @@ export function createPedestrian(materials, layout, { index }) {
 
     figurePosition() {
       return figure.position.clone();
+    },
+
+    showBox() {
+      pizzaBox.visible = true;
+    },
+
+    boxPosition(out) {
+      return out.copy(pizzaBox.position);
     },
 
     isDone() {
@@ -219,10 +227,12 @@ export function createPedestrian(materials, layout, { index }) {
 
         case 'AT_COUNTER': {
           animateLegs(dt, false);
-          timer += dt;
+          // Serving needs the cashier in the sell zone. Stepping away pauses
+          // the timer rather than resetting it.
+          if (world.canServe()) timer += dt;
           if (timer >= sim.serveSeconds) {
-            pizzaBox.visible = true;
-            world.recordSale();
+            // The box appears in the customer's hands when the thrown one lands.
+            world.recordSale(pedestrian);
             follower.set(walkOutPath(layout, bay, slotPosition(layout, slot)));
             slot = null;
             setState('WALKING_OUT');
@@ -247,4 +257,6 @@ export function createPedestrian(materials, layout, { index }) {
       }
     },
   };
+
+  return pedestrian;
 }

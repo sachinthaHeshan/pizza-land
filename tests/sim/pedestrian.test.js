@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import { createPedestrian, PEDESTRIAN_STATES } from '../../src/sim/pedestrian.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
@@ -12,7 +13,10 @@ function world() {
     isSlotFree: () => true,
     queueLength: () => 1,
     enqueueSlot: () => 1,
-    recordSale() {},
+    canServe: () => true,
+    recordSale(pedestrian) {
+      pedestrian.showBox();
+    },
   };
 }
 
@@ -79,6 +83,44 @@ describe('createPedestrian', () => {
     expect(sales).toBe(1);
   });
 
+  it('holds the sale while the cashier is away from the sell zone', () => {
+    let sales = 0;
+    const w = world();
+    w.canServe = () => false;
+    w.recordSale = () => sales++;
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    run(p, w, 90);
+    expect(p.state).toBe('AT_COUNTER');
+    expect(p.hasBox).toBe(false);
+    expect(sales).toBe(0);
+  });
+
+  it('keeps serving progress when the cashier steps away and comes back', () => {
+    let sales = 0;
+    let cashierIn = true;
+    const w = world();
+    w.canServe = () => cashierIn;
+    w.recordSale = () => sales++;
+    const serve = layout.sim.serveSeconds;
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    for (let t = 0; t < 90 && p.state !== 'AT_COUNTER'; t += 1 / 60) p.update(1 / 60, w);
+    expect(p.state).toBe('AT_COUNTER');
+
+    run(p, w, serve * 0.6);
+    cashierIn = false;
+    run(p, w, 10);
+    expect(p.state).toBe('AT_COUNTER');
+    expect(sales).toBe(0);
+
+    // Short of a full serve on its own, so this only sells if the first
+    // stint's progress was kept rather than reset.
+    cashierIn = true;
+    run(p, w, serve * 0.5);
+    expect(sales).toBe(1);
+  });
+
   it('never teleports', () => {
     const p = createPedestrian(stubMaterials(), layout, { index: 0 });
     const w = world();
@@ -104,5 +146,30 @@ describe('createPedestrian', () => {
     p.start(layout.sim.bays[1]);
     expect(p.state).toBe('WALKING_IN');
     expect(p.isDone()).toBe(false);
+  });
+
+  it('passes itself to the sale and shows its box only when handed one', () => {
+    const w = world();
+    let buyer = null;
+    w.recordSale = (pedestrian) => {
+      buyer = pedestrian;
+    };
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    for (let t = 0; t < 90 && p.state !== 'WALKING_OUT'; t += 1 / 60) p.update(1 / 60, w);
+    expect(p.state).toBe('WALKING_OUT');
+    expect(buyer).toBe(p);
+    expect(p.hasBox).toBe(false);
+    p.showBox();
+    expect(p.hasBox).toBe(true);
+  });
+
+  it('reports where its hands hold the box', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    const at = p.boxPosition(new THREE.Vector3());
+    const feet = p.figurePosition();
+    expect(at.y).toBeGreaterThan(0.5);
+    expect(Math.hypot(at.x - feet.x, at.z - feet.z)).toBeLessThan(0.5);
   });
 });

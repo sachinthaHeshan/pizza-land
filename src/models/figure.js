@@ -36,6 +36,13 @@ const P = {
   shellOutset: 0.003,
 };
 
+// The arm's shoulder height and hanging length as fractions of the figure's
+// height, for anything that must line up with the hands (the carried stack).
+export const ARM_PROPORTIONS = Object.freeze({
+  shoulder: P.armTop,
+  length: P.armTop - P.armBottom,
+});
+
 export function createFigure(materials, spec) {
   const {
     x = 0,

@@ -45,4 +45,45 @@ describe('createTextures', () => {
     const rects = stripeCanvas.__calls.filter(([method]) => method === 'fillRect');
     expect(rects.length).toBeGreaterThanOrEqual(8);
   });
+
+  it('letters SELL PIZZA onto the sell banner', () => {
+    expect(TEXTURE_KEYS).toContain('sellBanner');
+    const factory = stubCanvasFactory();
+    const canvases = [];
+    createTextures((w, h) => {
+      const c = factory(w, h);
+      canvases.push(c);
+      return c;
+    });
+    const banner = canvases[TEXTURE_KEYS.indexOf('sellBanner')];
+    const words = banner.__calls
+      .filter(([method]) => method === 'fillText')
+      .map(([, text]) => text);
+    expect(words).toEqual(expect.arrayContaining(['SELL', 'PIZZA']));
+  });
+
+  it('redraws the oven banner with its count, only when the count changes', () => {
+    const factory = stubCanvasFactory();
+    const canvases = [];
+    const textures = createTextures((w, h) => {
+      const c = factory(w, h);
+      canvases.push(c);
+      return c;
+    });
+    const banner = textures.ovenBanner;
+    const calls = canvases[TEXTURE_KEYS.indexOf('ovenBanner')].__calls;
+    const words = () => calls.filter(([m]) => m === 'fillText').map(([, text]) => text);
+
+    const version = banner.version;
+    banner.userData.setCount(3, 10);
+    expect(words()).toContain('3/10');
+    expect(banner.userData.count).toBe(3);
+    expect(banner.version).toBeGreaterThan(version);
+
+    const drawn = calls.length;
+    const redrawn = banner.version;
+    banner.userData.setCount(3, 10);
+    expect(calls.length).toBe(drawn);
+    expect(banner.version).toBe(redrawn);
+  });
 });

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { MATERIAL_KEYS } from '../../src/materials.js';
+import { ovenBannerTexture } from '../../src/textures.js';
 
 export function stubCanvasFactory() {
   return (width, height) => {
@@ -28,5 +29,8 @@ export function stubMaterials() {
   for (const key of MATERIAL_KEYS) {
     materials[key] = new THREE.MeshStandardMaterial({ name: key });
   }
+  // The simulation redraws the oven banner's count every frame, so the stub
+  // needs a working count texture rather than a bare material.
+  materials.ovenBanner.map = ovenBannerTexture(stubCanvasFactory());
   return materials;
 }

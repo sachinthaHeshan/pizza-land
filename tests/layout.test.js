@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { layout } from '../src/layout.js';
+import { playerObstacles, hitsObstacle, PLAYER_RADIUS } from '../src/sim/obstacles.js';
 
 const rects = [
   ...layout.ground.terracotta,
@@ -42,6 +43,24 @@ describe('layout', () => {
     for (const [px, pz] of layout.perimeter.pillars) {
       expect(Math.abs(px) === 11 || px === 9).toBe(true);
       expect(Math.abs(pz) === 8 || pz === 6 || pz === 2).toBe(true);
+    }
+  });
+
+  it('keeps shop walls only a little taller than a person, leaving the oven taller', () => {
+    const tallestPerson = Math.max(
+      layout.queue.cashier.height,
+      ...layout.sim.people.map((person) => person.height)
+    );
+    const shopWalls = [
+      layout.diningWing.wallHeight,
+      layout.sideWing.wallHeight,
+      layout.storefront.header[1],
+      layout.kitchen.tileWall.y[1],
+    ];
+    for (const height of shopWalls) {
+      expect(height).toBeGreaterThan(tallestPerson);
+      expect(height - tallestPerson).toBeLessThanOrEqual(0.55);
+      expect(height).toBeLessThan(layout.oven.flue.y[1]);
     }
   });
 });
@@ -173,5 +192,51 @@ describe('layout.parking', () => {
   it('leaves the island between the lot and the road', () => {
     expect(layout.parking.island.z[0]).toBeGreaterThanOrEqual(layout.parking.lot.z[1]);
     expect(layout.parking.island.z[1]).toBeLessThanOrEqual(layout.ground.road.z[0]);
+  });
+});
+
+describe('layout.queue.sellZone', () => {
+  const zone = layout.queue.sellZone;
+  const { cashier } = layout.queue;
+  const { counter } = layout;
+
+  it('starts the cashier inside the sell zone, so the shop sells from the first frame', () => {
+    expect(cashier.x).toBeGreaterThan(zone.x[0]);
+    expect(cashier.x).toBeLessThan(zone.x[1]);
+    expect(cashier.z).toBeGreaterThan(zone.z[0]);
+    expect(cashier.z).toBeLessThan(zone.z[1]);
+  });
+
+  it('sits on the kitchen side of the counter, clear of the return leg and the island', () => {
+    expect(zone.z[1]).toBeLessThanOrEqual(counter.main.z[0]);
+    expect(zone.x[0]).toBeGreaterThanOrEqual(counter.main.x[0]);
+    expect(zone.x[1]).toBeLessThanOrEqual(counter.ret.x[0] - counter.overhang);
+    expect(zone.z[0]).toBeGreaterThan(layout.kitchen.island.z[1]);
+  });
+});
+
+describe('layout.oven.pickupZone', () => {
+  const zone = layout.oven.pickupZone;
+  const centre = [(zone.x[0] + zone.x[1]) / 2, (zone.z[0] + zone.z[1]) / 2];
+
+  it('lets the player stand in the middle of the pickup zone', () => {
+    expect(hitsObstacle(centre[0], centre[1], PLAYER_RADIUS, playerObstacles(layout))).toBe(false);
+  });
+
+  it('sits in front of the oven mouth, clear of the oven and the island', () => {
+    expect(zone.x[1]).toBeLessThanOrEqual(layout.oven.base.x[0]);
+    expect(zone.x[0]).toBeGreaterThan(layout.kitchen.island.x[1]);
+    const mouthZ = layout.oven.dome.center[2];
+    expect(mouthZ).toBeGreaterThan(zone.z[0]);
+    expect(mouthZ).toBeLessThan(zone.z[1]);
+  });
+
+  it('gives every pizza timing and limit a positive value', () => {
+    const p = layout.sim.pizza;
+    const values = [
+      p.bakeSeconds, p.ovenCapacity, p.pickupSeconds, p.carryMax,
+      p.hopSeconds, p.carriedBox.size, p.carriedBox.thickness,
+    ];
+    for (const v of values) expect(v).toBeGreaterThan(0);
   });
 });

@@ -34,15 +34,45 @@ describe('createMaterials', () => {
   });
 
   it('declares a positive world tile size for every mapped material', () => {
+    // Artwork is stretched across its face once rather than tiled.
+    const artwork = ['sign', 'sellBanner', 'ovenBanner'];
     for (const [key, material] of Object.entries(materials)) {
       if (!material.map) continue;
       const tile = material.userData.tile;
-      if (key === 'sign') {
+      if (artwork.includes(key)) {
         expect(tile, key).toBeNull();
       } else {
         expect(tile, key).toBeGreaterThan(0);
       }
     }
+  });
+
+  it('draws the sell banner as a see-through sprite that keeps its colours', () => {
+    const textures = createTextures(stubCanvasFactory());
+    const m = createMaterials(textures);
+    expect(m.sellBanner).toBeInstanceOf(THREE.SpriteMaterial);
+    expect(m.sellBanner.map).toBe(textures.sellBanner);
+    expect(m.sellBanner.transparent).toBe(true);
+    expect(m.sellBanner.toneMapped).toBe(false);
+  });
+
+  // Both pulse by opacity, which only shows on a transparent material.
+  it('keeps the zone marker glow unlit and able to fade', () => {
+    for (const key of ['markerBeam', 'markerEdge']) {
+      expect(materials[key], key).toBeInstanceOf(THREE.MeshBasicMaterial);
+      expect(materials[key].transparent, key).toBe(true);
+      expect(materials[key].depthWrite, key).toBe(false);
+    }
+    expect(materials.markerBeam.opacity).toBeLessThan(1);
+  });
+
+  it('draws the oven banner as a see-through sprite on the count texture', () => {
+    const textures = createTextures(stubCanvasFactory());
+    const m = createMaterials(textures);
+    expect(m.ovenBanner).toBeInstanceOf(THREE.SpriteMaterial);
+    expect(m.ovenBanner.map).toBe(textures.ovenBanner);
+    expect(m.ovenBanner.transparent).toBe(true);
+    expect(m.ovenBanner.toneMapped).toBe(false);
   });
 
   it('maps the brick material to the brick texture', () => {

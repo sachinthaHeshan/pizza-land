@@ -12,6 +12,8 @@ export const TEXTURE_KEYS = [
   'asphalt',
   'metal',
   'sign',
+  'sellBanner',
+  'ovenBanner',
 ];
 
 export function defaultCanvasFactory(width, height) {
@@ -219,6 +221,143 @@ function sign(factory) {
   return finish(canvas);
 }
 
+// Drawn with plain path calls rather than ctx.roundRect so it needs nothing
+// beyond the basic canvas API.
+function roundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function pizzaSlice(ctx, cx, cy, size) {
+  const half = size * 0.36;
+  const top = -size * 0.36;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.35);
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#3b2314';
+  ctx.lineWidth = size * 0.05;
+
+  ctx.fillStyle = '#ffc53d';
+  ctx.beginPath();
+  ctx.moveTo(-half, top);
+  ctx.lineTo(half, top);
+  ctx.lineTo(0, size * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#d9822b';
+  roundedRect(ctx, -half - size * 0.06, top - size * 0.14, (half + size * 0.06) * 2, size * 0.18, size * 0.09);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#d63a2a';
+  ctx.lineWidth = size * 0.025;
+  for (const [px, py, r] of [[-0.12, -0.12, 0.08], [0.13, -0.05, 0.07], [0, 0.18, 0.065]]) {
+    ctx.beginPath();
+    ctx.arc(px * size, py * size, r * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// A glassy panel with a glowing rim, like a mobile-game "go here" marker.
+// The canvas is 2:1 and the banner sprite keeps that aspect.
+function sellBanner(factory) {
+  const width = 1024;
+  const height = 512;
+  const canvas = factory(width, height);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+
+  const inset = 44;
+  roundedRect(ctx, inset, inset, width - inset * 2, height - inset * 2, 84);
+  ctx.fillStyle = 'rgba(255, 214, 150, 0.32)';
+  ctx.fill();
+  ctx.shadowColor = '#ffb13b';
+  ctx.shadowBlur = 36;
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = '#ffd772';
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  const inner = inset + 16;
+  roundedRect(ctx, inner, inner, width - inner * 2, height - inner * 2, 70);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.stroke();
+
+  pizzaSlice(ctx, 290, 262, 300);
+
+  ctx.font = '900 150px "Arial Black", "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 22;
+  ctx.strokeStyle = '#3b2314';
+  for (const [word, fill, y] of [['SELL', '#ffd23a', 190], ['PIZZA', '#ffffff', 340]]) {
+    ctx.strokeText(word, 660, y);
+    ctx.fillStyle = fill;
+    ctx.fillText(word, 660, y);
+  }
+  return finish(canvas);
+}
+
+// The oven's count banner. It redraws in place when the count changes, and
+// stays blank until the simulation first sets a count.
+export function ovenBannerTexture(factory = defaultCanvasFactory) {
+  const width = 512;
+  const height = 256;
+  const canvas = factory(width, height);
+  const ctx = canvas.getContext('2d');
+  const texture = finish(canvas);
+  texture.userData.count = null;
+
+  texture.userData.setCount = (count, capacity) => {
+    if (count === texture.userData.count) return;
+    texture.userData.count = count;
+
+    ctx.clearRect(0, 0, width, height);
+    const inset = 22;
+    roundedRect(ctx, inset, inset, width - inset * 2, height - inset * 2, 42);
+    ctx.fillStyle = 'rgba(255, 214, 150, 0.32)';
+    ctx.fill();
+    ctx.shadowColor = '#ffb13b';
+    ctx.shadowBlur = 18;
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = '#ffd772';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    pizzaSlice(ctx, 120, 131, 150);
+
+    const text = `${count}/${capacity}`;
+    ctx.font = '900 96px "Arial Black", "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = '#3b2314';
+    ctx.strokeText(text, 340, 134);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, 340, 134);
+    texture.needsUpdate = true;
+  };
+
+  return texture;
+}
+
 const GENERATORS = {
   brick,
   terracotta,
@@ -230,6 +369,8 @@ const GENERATORS = {
   asphalt,
   metal,
   sign,
+  sellBanner,
+  ovenBanner: ovenBannerTexture,
 };
 
 export function createTextures(canvasFactory = defaultCanvasFactory) {

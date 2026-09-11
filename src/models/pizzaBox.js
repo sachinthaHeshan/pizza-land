@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import { box } from '../utils/geometry.js';
 
-export function createPizzaBox(materials, size = 0.42) {
+export function createPizzaBox(materials, size = 0.42, thickness = size * 0.16) {
   const group = new THREE.Group();
   group.name = 'pizzaBox';
   const half = size / 2;
-  const thickness = size * 0.16;
 
   group.add(
     box(materials.pizzaBox, {

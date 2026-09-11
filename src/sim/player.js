@@ -1,12 +1,20 @@
-import { createFigure } from '../models/figure.js';
+import { createFigure, ARM_PROPORTIONS } from '../models/figure.js';
+import { createPizzaStack } from '../models/pizzaStack.js';
 import { playerObstacles, slideMove, PLAYER_RADIUS } from './obstacles.js';
 
 const EMPTY_KEYS = new Set();
+const CARRY_ANGLE = -Math.PI / 2;
 
 export function createPlayer(materials, layout) {
   const spec = layout.queue.cashier;
   const figure = createFigure(materials, { ...spec, facing: spec.facing });
   figure.name = 'cashier';
+
+  const { carryMax } = layout.sim.pizza;
+  const stack = createPizzaStack(materials, layout);
+  stack.position.set(0, spec.height * ARM_PROPORTIONS.shoulder, spec.height * ARM_PROPORTIONS.length);
+  figure.add(stack);
+  let carried = 0;
 
   const speed = layout.sim.speeds.walk;
   const stride = layout.sim.stride;
@@ -35,10 +43,28 @@ export function createPlayer(materials, layout) {
         limb.rotation.x *= Math.max(0, 1 - dt * 8);
       }
     }
+    // Carrying overrides the arm swing: both arms hold the stack.
+    if (carried > 0) {
+      limbs.armL.rotation.x = CARRY_ANGLE;
+      limbs.armR.rotation.x = CARRY_ANGLE;
+    }
   }
 
   return {
     figure,
+    stack,
+
+    get carried() {
+      return carried;
+    },
+
+    receive() {
+      carried = Math.min(carryMax, carried + 1);
+    },
+
+    handOver() {
+      carried = Math.max(0, carried - 1);
+    },
 
     update(dt, keys = EMPTY_KEYS) {
       let x = 0;

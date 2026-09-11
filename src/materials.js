@@ -45,12 +45,16 @@ export const MATERIAL_KEYS = [
   'busBody',
   'vanBody',
   'horn',
+  'sellBanner',
+  'markerBeam',
+  'markerEdge',
+  'ovenBanner',
 ];
 
 // World units spanned by one full texture image. The geometry helpers scale
 // each mesh's UVs by its own size divided by this, so texture density stays
 // constant whether a surface is 1 unit wide or 20. `null` means "stretch the
-// image across the face once" — used for the signboard artwork.
+// image across the face once" — used for the signboard and banner artwork.
 const TILE = {
   brick: 3.5,
   terracotta: 2.1,
@@ -62,6 +66,8 @@ const TILE = {
   asphalt: 4.0,
   metal: 1.5,
   sign: null,
+  sellBanner: null,
+  ovenBanner: null,
 };
 
 export function createMaterials(textures) {
@@ -152,6 +158,38 @@ export function createMaterials(textures) {
     horn: new THREE.MeshBasicMaterial({ name: 'horn', color: 0xffd66b, depthWrite: false }),
     glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a, depthWrite: false }),
     ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a, depthWrite: false }),
+    // The sell marker is UI laid into the world: unlit, and kept out of tone
+    // mapping so its yellows stay as bright as the artwork.
+    sellBanner: new THREE.SpriteMaterial({
+      name: 'sellBanner',
+      map: textures.sellBanner,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+    ovenBanner: new THREE.SpriteMaterial({
+      name: 'ovenBanner',
+      map: textures.ovenBanner,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+    markerBeam: new THREE.MeshBasicMaterial({
+      name: 'markerBeam',
+      color: 0xffd27a,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    }),
+    markerEdge: new THREE.MeshBasicMaterial({
+      name: 'markerEdge',
+      color: 0xfff0a8,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    }),
   };
 
   for (const [key, material] of Object.entries(materials)) {

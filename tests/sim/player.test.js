@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import { createPlayer } from '../../src/sim/player.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
@@ -105,5 +106,66 @@ describe('createPlayer', () => {
     hold(p, ['d'], 1);
     expect(p.figure.position.x).toBeGreaterThan(spawn.x + 0.5);
     expect(p.figure.position.z).toBeLessThan(layout.counter.main.z[0]);
+  });
+});
+
+describe('carrying pizzas', () => {
+  const { carryMax } = layout.sim.pizza;
+
+  it('starts empty-handed', () => {
+    expect(player().carried).toBe(0);
+  });
+
+  it('keeps the carried count between zero and the carry limit', () => {
+    const p = player();
+    for (let i = 0; i < carryMax + 5; i++) p.receive();
+    expect(p.carried).toBe(carryMax);
+    for (let i = 0; i < carryMax + 5; i++) p.handOver();
+    expect(p.carried).toBe(0);
+  });
+
+  it('holds the stack in front of its chest, above the counter top', () => {
+    const p = player();
+    expect(p.stack.parent).toBe(p.figure);
+    const slot = p.stack.userData.slotPosition(0, new THREE.Vector3());
+    // The cashier spawns facing +Z, so in front means larger z.
+    expect(slot.z).toBeGreaterThan(p.figure.position.z + 0.2);
+    expect(slot.y).toBeGreaterThan(layout.counter.topHeight);
+  });
+
+  it('holds both arms forward while carrying, even when walking', () => {
+    const p = player();
+    p.receive();
+    hold(p, ['s'], 0.5);
+    const { armL, armR, legL } = p.figure.userData.limbs;
+    expect(armL.rotation.x).toBeCloseTo(-Math.PI / 2, 5);
+    expect(armR.rotation.x).toBeCloseTo(-Math.PI / 2, 5);
+    expect(Math.abs(legL.rotation.x)).toBeGreaterThan(0.05);
+  });
+
+  it('swings its arms again once its hands are empty', () => {
+    const p = player();
+    p.receive();
+    hold(p, ['s'], 0.2);
+    p.handOver();
+    const keys = new Set(['s']);
+    let swinging = 0;
+    for (let t = 0; t < 0.6; t += 1 / 60) {
+      p.update(1 / 60, keys);
+      const armR = p.figure.userData.limbs.armR.rotation.x;
+      if (Math.abs(armR + Math.PI / 2) > 0.5) swinging++;
+    }
+    expect(swinging).toBeGreaterThan(10);
+  });
+
+  it('puts the stack where the tips of the carrying arms meet', () => {
+    const p = player();
+    p.receive();
+    p.update(1 / 60, new Set());
+    p.figure.updateMatrixWorld(true);
+    const arm = new THREE.Box3().setFromObject(p.figure.userData.limbs.armR);
+    const stack = p.stack.getWorldPosition(new THREE.Vector3());
+    expect(arm.max.z).toBeCloseTo(stack.z, 3);
+    expect((arm.min.y + arm.max.y) / 2).toBeCloseTo(stack.y, 3);
   });
 });

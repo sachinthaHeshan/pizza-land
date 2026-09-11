@@ -5,6 +5,46 @@ import { slotPosition } from '../../src/sim/paths.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
 
+// Walks the cashier out of the sell zone, then runs until a customer is
+// standing at the counter with nobody there to serve them.
+function leaveCustomerWaiting(sim) {
+  const step = 1 / 60;
+  for (let t = 0; t < 1; t += step) sim.update(step, new Set(['w']));
+  const waiting = () => sim.pedestrians.some((p) => p.state === 'AT_COUNTER');
+  for (let t = 0; t < 90 && !waiting(); t += step) sim.update(step);
+  expect(waiting()).toBe(true);
+}
+
+const STEP = 1 / 60;
+
+function run(sim, seconds, keys) {
+  for (let t = 0; t < seconds - 1e-9; t += STEP) sim.update(STEP, keys);
+}
+
+function standIn(sim, zone) {
+  sim.player.figure.position.set((zone.x[0] + zone.x[1]) / 2, 0, (zone.z[0] + zone.z[1]) / 2);
+}
+
+function waitForCustomer(sim) {
+  const atCounter = () => sim.pedestrians.find((p) => p.state === 'AT_COUNTER');
+  for (let t = 0; t < 90 && !atCounter(); t += STEP) sim.update(STEP);
+  expect(atCounter()).toBeTruthy();
+  return atCounter();
+}
+
+const zoneBanner = (point) => point.getObjectByName('zoneBanner');
+
+// Runs the loop and reports how far a marker's beam opacity swung.
+function glowSwing(sim, point, seconds = 2) {
+  const beam = point.getObjectByName('zoneBeam');
+  const seen = [];
+  for (let t = 0; t < seconds; t += STEP) {
+    sim.update(STEP);
+    seen.push(beam.material.opacity);
+  }
+  return Math.max(...seen) - Math.min(...seen);
+}
+
 describe('createSimulation', () => {
   it('returns a named group with one child per pedestrian', () => {
     const sim = createSimulation(stubMaterials(), layout);
@@ -32,12 +72,141 @@ describe('createSimulation', () => {
     expect(sim.balance).toBe(0);
   });
 
-  it('adds $5 each time a pizza is sold at the counter', () => {
+  it('takes $5 and one carried pizza for each sale', () => {
     const sim = createSimulation(stubMaterials(), layout);
-    sim.world.recordSale();
+    const [customer] = sim.pedestrians;
+    sim.player.receive();
+    sim.player.receive();
+    sim.world.recordSale(customer);
     expect(sim.balance).toBe(5);
-    sim.world.recordSale();
-    expect(sim.balance).toBe(10);
+    expect(sim.player.carried).toBe(1);
+  });
+
+  it('marks the sell and oven zones in the scene', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    expect(sim.sellPoint.parent).toBe(sim.group);
+    expect(sim.ovenPoint.parent).toBe(sim.group);
+    expect(sim.hops.group.parent).toBe(sim.group);
+  });
+
+  it('serves only from inside the sell zone with a pizza in hand', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    expect(sim.world.canServe()).toBe(false);
+    sim.player.receive();
+    expect(sim.world.canServe()).toBe(true);
+    run(sim, 1, new Set(['w']));
+    expect(sim.world.canServe()).toBe(false);
+  });
+
+  it('holds every sale until the cashier walks back into the sell zone', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.player.receive();
+    leaveCustomerWaiting(sim);
+    run(sim, 10);
+    expect(sim.balance).toBe(0);
+
+    standIn(sim, layout.queue.sellZone);
+    run(sim, layout.sim.serveSeconds + 0.5);
+    expect(sim.balance).toBe(5);
+    expect(sim.player.carried).toBe(0);
+  });
+
+  it('never sells from empty hands, even inside the sell zone', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    waitForCustomer(sim);
+    run(sim, 10);
+    expect(sim.balance).toBe(0);
+  });
+
+  it('bakes, hands pizzas over one by one, and sells them at the cashier', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const { bakeSeconds, pickupSeconds } = layout.sim.pizza;
+    run(sim, bakeSeconds * 2 + 0.5);
+    expect(sim.oven.stock).toBe(2);
+
+    standIn(sim, layout.oven.pickupZone);
+    sim.update(STEP);
+    expect(sim.player.carried).toBe(1);
+    run(sim, pickupSeconds + 0.1);
+    expect(sim.player.carried).toBe(2);
+    expect(sim.oven.stock).toBe(0);
+
+    standIn(sim, layout.queue.sellZone);
+    for (let t = 0; t < 90 && sim.balance === 0; t += STEP) sim.update(STEP);
+    expect(sim.balance).toBe(5);
+    expect(sim.player.carried).toBe(1);
+  });
+
+  it('stops handing pizzas over once the hands are full', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const { carryMax, bakeSeconds } = layout.sim.pizza;
+    for (let i = 0; i < carryMax - 1; i++) sim.player.receive();
+    standIn(sim, layout.oven.pickupZone);
+    run(sim, bakeSeconds * 2 + 0.5);
+    expect(sim.player.carried).toBe(carryMax);
+    expect(sim.oven.stock).toBe(1);
+  });
+
+  it('lands each picked-up pizza on the stack after its hop', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const shown = () => sim.player.stack.children.filter((box) => box.visible).length;
+    run(sim, layout.sim.pizza.bakeSeconds + 0.5);
+    standIn(sim, layout.oven.pickupZone);
+    sim.update(STEP);
+    expect(sim.player.carried).toBe(1);
+    expect(shown()).toBe(0);
+    run(sim, layout.sim.pizza.hopSeconds + 0.05);
+    expect(shown()).toBe(1);
+  });
+
+  it('flies the sold box to the customer before it reaches their hands', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.player.receive();
+    const customer = waitForCustomer(sim);
+    for (let t = 0; t < 10 && sim.balance === 0; t += STEP) sim.update(STEP);
+    expect(sim.balance).toBe(5);
+    expect(customer.hasBox).toBe(false);
+    run(sim, layout.sim.pizza.hopSeconds + 0.05);
+    expect(customer.hasBox).toBe(true);
+  });
+
+  it('points an empty-handed player at the oven while customers wait', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    leaveCustomerWaiting(sim);
+    expect(glowSwing(sim, sim.ovenPoint)).toBeGreaterThan(0.1);
+    expect(glowSwing(sim, sim.sellPoint)).toBeLessThan(1e-6);
+    expect(zoneBanner(sim.sellPoint).visible).toBe(false);
+  });
+
+  it('points a player carrying pizzas at the cashier while customers wait', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.player.receive();
+    leaveCustomerWaiting(sim);
+    expect(zoneBanner(sim.sellPoint).visible).toBe(true);
+    expect(glowSwing(sim, sim.sellPoint)).toBeGreaterThan(0.1);
+    expect(glowSwing(sim, sim.ovenPoint)).toBeLessThan(1e-6);
+  });
+
+  it('calls nobody over when no one waits or the player is already selling', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.update(STEP);
+    expect(zoneBanner(sim.sellPoint).visible).toBe(false);
+    expect(glowSwing(sim, sim.ovenPoint, 1)).toBeLessThan(1e-6);
+
+    for (let i = 0; i < 3; i++) sim.player.receive();
+    waitForCustomer(sim);
+    expect(zoneBanner(sim.sellPoint).visible).toBe(false);
+    expect(glowSwing(sim, sim.sellPoint, 1)).toBeLessThan(1e-6);
+    expect(glowSwing(sim, sim.ovenPoint, 1)).toBeLessThan(1e-6);
+  });
+
+  it('always shows the oven banner with its current count', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const banner = zoneBanner(sim.ovenPoint);
+    run(sim, layout.sim.pizza.bakeSeconds * 2 + 0.5);
+    expect(banner.visible).toBe(true);
+    expect(sim.oven.stock).toBe(2);
+    expect(banner.material.map.userData.count).toBe(2);
   });
 
   it('keeps every pedestrian in a valid state while traffic runs', () => {

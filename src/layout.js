@@ -91,7 +91,7 @@ export const layout = {
   },
 
   kitchen: {
-    tileWall: { x: [-3, 6], z: -8, y: [1.2, 3.2], thickness: 0.12 },
+    tileWall: { x: [-3, 6], z: -8, y: [1.2, 2.2], thickness: 0.12 },
     backCounter: {
       x: [-3, 6],
       z: [-7.8, -6.8],
@@ -104,8 +104,8 @@ export const layout = {
       x: [0, 5],
       z: -7.9,
       depth: 0.4,
-      y: 2.0,
-      railY: 1.85,
+      y: 1.75,
+      railY: 1.6,
       thickness: 0.06,
     },
   },
@@ -113,14 +113,14 @@ export const layout = {
   diningWing: {
     footprint: { x: [-11, -3], z: [-6, 2] },
     plinthHeight: 1.1,
-    wallHeight: 2.8,
+    wallHeight: 2.2,
     thickness: 0.3,
     west: { x: -11, z: [-8, 2] },
     north: { z: -6, x: [-11, -3] },
-    partition: { x: -3, z: [-6, 2], door: [-1, 0.2], lintelY: 2.1 },
+    partition: { x: -3, z: [-6, 2], door: [-1, 0.2], lintelY: 1.95 },
     windows: {
       sill: 1.1,
-      head: 2.6,
+      head: 2.0,
       bays: [
         [-5.3, -3.1],
         [-2.1, 0.1],
@@ -133,20 +133,20 @@ export const layout = {
     x: [-11, -3],
     thickness: 0.3,
     plinth: [0, 0.9],
-    glass: [0.9, 2.5],
-    header: [2.5, 2.8],
+    glass: [0.9, 1.95],
+    header: [1.95, 2.2],
     posts: [-10.8, -8.6, -6.2, -4.6, -3.2],
     postSize: 0.22,
     door: { x: [-6.2, -4.6] },
     awning: {
       x: [-11, -3.4],
-      wallY: 2.9,
-      frontY: 2.45,
+      wallY: 2.3,
+      frontY: 1.85,
       frontZ: 3.3,
       valance: 0.25,
     },
-    sign: { x: [-8.8, -4.2], y: [3.0, 4.1], thickness: 0.18, archRise: 0.45 },
-    lamps: { xs: [-9.5, -4.0], y: 3.1, reach: 0.55, shadeRadius: 0.28 },
+    sign: { x: [-8.8, -4.2], y: [2.4, 3.5], thickness: 0.18, archRise: 0.45 },
+    lamps: { xs: [-9.5, -4.0], y: 2.4, reach: 0.55, shadeRadius: 0.28 },
   },
 
   counter: {
@@ -171,15 +171,20 @@ export const layout = {
     },
     chimney: { center: [7.9, -5.6], size: 0.7, y: [2.4, 4.3] },
     flue: { radius: 0.28, y: [4.3, 5.0], capRadius: 0.36 },
+    // Where the player stands to collect pizzas. The kitchen island hides
+    // the floor from the camera west of x 4.6, and the player cannot stand
+    // past x 5.35 against the oven base.
+    pickupZone: { x: [4.6, 5.5], z: [-5.5, -4.1] },
+    banner: { y: 3.1, width: 2.2, height: 1.1, bob: 0.08 },
   },
 
   sideWing: {
     footprint: { x: [5, 9], z: [2, 6] },
     plinthHeight: 1.0,
-    wallHeight: 2.8,
+    wallHeight: 2.2,
     thickness: 0.3,
-    window: { z: 6, width: 2.4, height: 1.4, sill: 1.1, centerX: 7 },
-    awning: { x: [5, 9], wallY: 3.0, frontY: 2.55, frontZ: 7.1, valance: 0.22 },
+    window: { z: 6, width: 2.4, height: 0.9, sill: 1.1, centerX: 7 },
+    awning: { x: [5, 9], wallY: 2.3, frontY: 1.85, frontZ: 7.1, valance: 0.22 },
   },
 
   // The queue forms on the plaza off the counter's customer side (+Z) and is
@@ -217,6 +222,10 @@ export const layout = {
       skin: "skin",
       cap: true,
     },
+    // The cashier only serves from this patch of floor behind the counter.
+    // It is centred on the spawn, so the shop sells before the player moves.
+    sellZone: { x: [1.2, 2.8], z: [2.3, 3.4] },
+    sellBanner: { y: 3.3, width: 2.8, height: 1.4, bob: 0.08 },
   },
 
   sim: {
@@ -251,6 +260,16 @@ export const layout = {
     },
     walk: { doorOffset: 1.1, sidewalkZ: 10.2, plazaZ: 8.6 },
     stride: { frequency: 5.2, amplitude: 0.52, armScale: 0.7 },
+    pizza: {
+      bakeSeconds: 5,
+      ovenCapacity: 10,
+      pickupSeconds: 0.3,
+      carryMax: 10,
+      hopSeconds: 0.3,
+      // Thicker than a customer's box so each one in a stack reads at
+      // default zoom.
+      carriedBox: { size: 0.42, thickness: 0.1 },
+    },
     people: [
       { height: 1.72, cloth: "clothBlue", hair: "hairDark", skin: "skin" },
       {
@@ -355,12 +374,12 @@ export const layout = {
     ground: { min: [-52, -0.25, -16], max: [52, 0.1, 46] },
     parking: { min: [-52, -0.2, 10.5], max: [52, 0.6, 26.6] },
     perimeter: { min: [-11.5, 0, -8.5], max: [9.5, 1.7, 6.5] },
-    diningWing: { min: [-11.4, 0, -8.4], max: [-2.8, 2.9, 2.2] },
-    storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.8, 3.6] },
-    kitchen: { min: [-3.2, 0, -8.2], max: [6.2, 3.3, -3.5] },
+    diningWing: { min: [-11.4, 0, -8.4], max: [-2.8, 2.3, 2.2] },
+    storefront: { min: [-11.4, 0, 1.7], max: [-2.9, 4.2, 3.6] },
+    kitchen: { min: [-3.2, 0, -8.2], max: [6.2, 2.3, -3.5] },
     oven: { min: [5.4, 0, -6.6], max: [9.0, 5.1, -3.0] },
     counter: { min: [-1.2, 0, 1.3], max: [5.2, 1.2, 4.6] },
-    sideWing: { min: [4.8, 0, 1.8], max: [9.4, 3.2, 7.3] },
+    sideWing: { min: [4.8, 0, 1.8], max: [9.4, 2.4, 7.3] },
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
     simulation: { min: [-46, 0, 4], max: [46, 2.2, 42] },
     traffic: { min: [-52, 0, 25], max: [52, 3.4, 42] },
