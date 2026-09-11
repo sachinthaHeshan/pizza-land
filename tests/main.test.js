@@ -33,7 +33,7 @@ describe('main.js render loop', () => {
     expect(source).toMatch(/['"]wasd['"]\.includes\(k\)|['"]wasd['"]\.includes\(key\)/);
   });
 
-  it('lets a HUD button cycle the simulation through 1x, 2x, and 5x', () => {
+  it('lets a HUD button cycle the simulation through 1x, 2x, 3x, and 5x', () => {
     expect(source).toMatch(/import \{ nextSimSpeed, labelSimSpeed \} from ["']\.\/sim\/speed\.js["']/);
     expect(source).toMatch(/document\.getElementById\(['"]speed['"]\)/);
     expect(source).toMatch(/speedButton\.addEventListener\('click'/);

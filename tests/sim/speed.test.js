@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { nextSimSpeed, labelSimSpeed } from '../../src/sim/speed.js';
 
 describe('nextSimSpeed', () => {
-  it('cycles 1 → 2 → 5 → 1', () => {
+  it('cycles 1 → 2 → 3 → 5 → 1', () => {
     expect(nextSimSpeed(1)).toBe(2);
-    expect(nextSimSpeed(2)).toBe(5);
+    expect(nextSimSpeed(2)).toBe(3);
+    expect(nextSimSpeed(3)).toBe(5);
     expect(nextSimSpeed(5)).toBe(1);
   });
 });
@@ -13,6 +14,7 @@ describe('labelSimSpeed', () => {
   it('shows the multiplier with an x suffix', () => {
     expect(labelSimSpeed(1)).toBe('1x');
     expect(labelSimSpeed(2)).toBe('2x');
+    expect(labelSimSpeed(3)).toBe('3x');
     expect(labelSimSpeed(5)).toBe('5x');
   });
 });

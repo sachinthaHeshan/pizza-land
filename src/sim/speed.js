@@ -1,4 +1,4 @@
-const SPEEDS = [1, 2, 5];
+const SPEEDS = [1, 2, 3, 5];
 
 export function nextSimSpeed(current) {
   const i = SPEEDS.indexOf(current);

@@ -237,7 +237,7 @@ export const layout = {
     pedestrians: 8,
     spawnGap: 9.0,
     respawnDelay: 2.0,
-    serveSeconds: 2.5,
+    serveSeconds: 0.7,
     boardSeconds: 0.8,
     speeds: { car: 7.5, walk: 1.35 },
     lane: { z: 28.25, enterX: 45, exitX: -45 },
