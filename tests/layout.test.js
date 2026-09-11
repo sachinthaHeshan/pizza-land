@@ -63,6 +63,14 @@ describe('layout.sim', () => {
     expect(slots[0][1]).toBeGreaterThan(layout.counter.main.z[1]);
   });
 
+  it('lays the shop-front queue in a straight line, not a diagonal', () => {
+    const slots = layout.queue.slots;
+    const x = slots[0][0];
+    for (const [slotX] of slots) {
+      expect(slotX).toBeCloseTo(x, 5);
+    }
+  });
+
   it('keeps parked cars clear of the kerb and the travel lane', () => {
     const half = layout.sim.car.length / 2;
     for (const row of layout.parking.rows) {

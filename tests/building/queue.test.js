@@ -19,19 +19,8 @@ describe('createQueue', () => {
     expectFinite(boundsOf(group));
   });
 
-  it('builds only the cashier, leaving the queue to the simulation', () => {
-    expect(figures).toHaveLength(1);
-  });
-
-  it('stands the cashier behind the counter', () => {
-    const cashier = figures[0];
-    expect(cashier.position.z).toBeLessThan(layout.counter.main.z[0]);
-    expect(cashier.position.x).toBeGreaterThan(layout.counter.main.x[0]);
-    expect(cashier.position.x).toBeLessThan(layout.counter.main.x[1]);
-  });
-
-  it('turns the cashier to face the customers', () => {
-    expect(figures[0].rotation.y).toBeCloseTo(layout.queue.cashier.facing, 5);
+  it('builds no people, leaving the cashier to the player', () => {
+    expect(figures).toHaveLength(0);
   });
 
   it('ropes every stanchion to the next one', () => {

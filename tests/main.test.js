@@ -23,7 +23,14 @@ describe('main.js render loop', () => {
 
   it('advances it with a real frame delta, not a constant', () => {
     expect(source).toMatch(/clock\.getDelta\(\)/);
-    expect(source).toMatch(/simulation\.update\(\s*delta\s*\*\s*simSpeed\s*\)/);
+    expect(source).toMatch(/simulation\.update\(\s*delta\s*\*\s*simSpeed\s*,\s*keys\s*\)/);
+  });
+
+  it('steers the cashier with WASD', () => {
+    expect(source).toMatch(/keys\.add\(/);
+    expect(source).toMatch(/keys\.delete\(/);
+    expect(source).toMatch(/addEventListener\(['"]keyup['"]/);
+    expect(source).toMatch(/['"]wasd['"]\.includes\(k\)|['"]wasd['"]\.includes\(key\)/);
   });
 
   it('lets a HUD button cycle the simulation through 1x, 2x, and 5x', () => {

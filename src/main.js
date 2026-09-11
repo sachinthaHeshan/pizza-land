@@ -112,8 +112,17 @@ function resetView() {
   controls.update();
   controls.enableDamping = damping;
 }
+const keys = new Set();
 window.addEventListener("keydown", (event) => {
-  if (event.key === "r" || event.key === "R") resetView();
+  const k = event.key.toLowerCase();
+  if (k === "r") resetView();
+  if ("wasd".includes(k)) {
+    keys.add(k);
+    event.preventDefault();
+  }
+});
+window.addEventListener("keyup", (event) => {
+  keys.delete(event.key.toLowerCase());
 });
 
 // Browsers refuse to start audio outside a user gesture, so the horn stays
@@ -145,7 +154,7 @@ function animate() {
   const t = clock.elapsedTime;
   fireLight.intensity =
     baseIntensity * (0.86 + 0.14 * Math.sin(t * 9.3) * Math.sin(t * 3.1));
-  shop.userData.simulation.update(delta * simSpeed);
+  shop.userData.simulation.update(delta * simSpeed, keys);
   balanceLabel.textContent = `$${shop.userData.simulation.balance}`;
   controls.update();
   clampPan();

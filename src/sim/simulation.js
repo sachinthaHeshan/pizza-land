@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createPedestrian } from './pedestrian.js';
+import { createPlayer } from './player.js';
 import { createTraffic } from './traffic.js';
 import { createPool } from './pool.js';
 
@@ -60,15 +61,20 @@ export function createSimulation(materials, layout, { horn } = {}) {
   });
   group.add(traffic.group);
 
+  const player = createPlayer(materials, layout);
+  group.add(player.figure);
+
   return {
     group,
     pedestrians,
     traffic,
+    player,
     world,
     get balance() {
       return balance;
     },
-    update(dt) {
+    update(dt, keys) {
+      player.update(dt, keys);
       traffic.update(dt);
       compactQueue();
       for (const pedestrian of pedestrians) pedestrian.update(dt, world);

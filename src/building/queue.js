@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { createFigure } from '../models/figure.js';
 
 function stanchion(materials, layout, [x, z], b) {
   const parts = [];
@@ -58,9 +57,6 @@ export function createQueue(materials, layout) {
   for (let i = 0; i < b.posts.length - 1; i++) {
     group.add(rope(materials, b.posts[i], b.posts[i + 1], b));
   }
-
-  const cashier = q.cashier;
-  group.add(createFigure(materials, { ...cashier, facing: cashier.facing }));
 
   return group;
 }

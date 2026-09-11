@@ -13,6 +13,20 @@ describe('createSimulation', () => {
     expect(sim.pedestrians).toHaveLength(layout.sim.pedestrians);
   });
 
+  it('owns the cashier as the player, standing behind the counter', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    expect(sim.player.figure.parent).toBe(sim.group);
+    expect(sim.player.figure.position.x).toBeCloseTo(layout.queue.cashier.x, 5);
+    expect(sim.player.figure.position.z).toBeCloseTo(layout.queue.cashier.z, 5);
+  });
+
+  it('moves the player when update is given WASD keys', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const startX = sim.player.figure.position.x;
+    for (let t = 0; t < 1; t += 1 / 60) sim.update(1 / 60, new Set(['w']));
+    expect(sim.player.figure.position.x).toBeGreaterThan(startX + 0.5);
+  });
+
   it('starts with a $0 balance', () => {
     const sim = createSimulation(stubMaterials(), layout);
     expect(sim.balance).toBe(0);
