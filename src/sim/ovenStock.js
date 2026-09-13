@@ -32,7 +32,7 @@ export function createOvenStock(layout) {
       cooldown -= dt;
       if (cooldown > 0 || stock < 1 || room < 1) return 0;
       stock--;
-      cooldown = pickupSeconds;
+      cooldown = pickupSeconds + Math.max(cooldown, -dt);
       return 1;
     },
   };

@@ -1,21 +1,22 @@
-// A synthesised two-tone horn. Browsers refuse to start an AudioContext
+// Sampled car horn. Browsers refuse to start an AudioContext
 // outside a user gesture, so nothing is built until enable() is called from
 // a click — and with no factory at all (the Node tests) every call is inert.
-export function createHorn(contextFactory) {
+export function createHorn(contextFactory, { sampleUrl, fetch: fetchFn = globalThis.fetch } = {}) {
   let context = null;
+  let buffer = null;
 
-  function tone(frequency, startAt, duration) {
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(frequency, startAt);
-    gain.gain.setValueAtTime(0.0001, startAt);
-    gain.gain.linearRampToValueAtTime(0.08, startAt + 0.02);
-    gain.gain.linearRampToValueAtTime(0.0001, startAt + duration);
-    osc.connect(gain);
-    gain.connect(context.destination);
-    osc.start(startAt);
-    osc.stop(startAt + duration + 0.02);
+  function loadSample() {
+    if (!sampleUrl || typeof fetchFn !== 'function') return;
+    Promise.resolve()
+      .then(() => fetchFn(sampleUrl))
+      .then((response) => response.arrayBuffer())
+      .then((data) => context.decodeAudioData(data))
+      .then((decoded) => {
+        buffer = decoded;
+      })
+      .catch(() => {
+        // A missing sample or a closed context must never break the render loop.
+      });
   }
 
   return {
@@ -28,17 +29,22 @@ export function createHorn(contextFactory) {
       try {
         context = contextFactory();
         if (context.state === 'suspended') context.resume();
+        loadSample();
       } catch {
         context = null;
       }
     },
 
     play() {
-      if (!context) return;
+      if (!context || !buffer) return;
       try {
-        const now = context.currentTime;
-        tone(440, now, 0.16);
-        tone(330, now + 0.18, 0.2);
+        const source = context.createBufferSource();
+        const gain = context.createGain();
+        source.buffer = buffer;
+        gain.gain.setValueAtTime(0.45, context.currentTime);
+        source.connect(gain);
+        gain.connect(context.destination);
+        source.start();
       } catch {
         // A closed or interrupted context must never break the render loop.
       }

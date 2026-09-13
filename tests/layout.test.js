@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import { layout } from '../src/layout.js';
 import { playerObstacles, hitsObstacle, PLAYER_RADIUS } from '../src/sim/obstacles.js';
 
@@ -272,5 +273,157 @@ describe('layout.oven.pickupZone', () => {
       p.hopSeconds, p.carriedBox.size, p.carriedBox.thickness,
     ];
     for (const v of values) expect(v).toBeGreaterThan(0);
+  });
+});
+
+describe('layout.town', () => {
+  const t = layout.town;
+  const farWalk = layout.ground.sidewalk.find((r) => r.z[0] === layout.ground.kerbs[1].z[1]);
+
+  it('lays every town band inside the far sidewalk strip', () => {
+    const bands = [
+      t.kerbStrip.z,
+      [t.firstRow.back, t.firstRow.front],
+      t.firstRow.lane,
+      [t.secondRow.back, t.secondRow.front],
+      t.secondRow.garden,
+      t.treeLine.z,
+    ];
+    for (const [z0, z1] of bands) {
+      expect(z0).toBeGreaterThanOrEqual(farWalk.z[0]);
+      expect(z1).toBeLessThanOrEqual(farWalk.z[1]);
+    }
+    expect(t.x[0]).toBeGreaterThanOrEqual(farWalk.x[0]);
+    expect(t.x[1]).toBeLessThanOrEqual(farWalk.x[1]);
+  });
+
+  it('orders the bands away from the road', () => {
+    expect(t.kerbStrip.z[1]).toBeLessThanOrEqual(t.rearFence.z[0]);
+    expect(t.rearFence.z[1]).toBe(t.firstRow.back);
+    expect(t.firstRow.front).toBe(t.firstRow.lane[0]);
+    expect(t.firstRow.lane[1]).toBe(t.secondRow.back);
+    expect(t.secondRow.front).toBe(t.secondRow.garden[0]);
+    expect(t.secondRow.garden[1]).toBeLessThanOrEqual(t.treeLine.z[0]);
+    expect(t.treeLine.treeZ[0]).toBeGreaterThanOrEqual(t.treeLine.z[0]);
+    expect(t.treeLine.treeZ[1]).toBeLessThanOrEqual(t.treeLine.z[1]);
+  });
+
+  it('caps the tallest possible buildings so the far lane stays in view', () => {
+    const rise = layout.camera.direction[1] / layout.camera.direction[2];
+    const farLane = Math.max(...layout.ground.lanes.map((l) => l.z));
+    const tallestFirst = Math.max(
+      t.shopWalls[1] + t.parapet,
+      t.houseWalls[0] + t.roofRise[0] + t.chimney.rise
+    );
+    const tallestSecond = t.houseWalls[1] + t.roofRise[1] + t.chimney.rise;
+    expect(tallestFirst).toBeLessThanOrEqual(t.firstRow.maxHeight);
+    expect(tallestSecond).toBeLessThanOrEqual(t.secondRow.maxHeight);
+    expect(t.firstRow.maxHeight).toBeLessThan((t.firstRow.back - farLane) * rise);
+  });
+
+  it('keeps the town envelope inside the ground', () => {
+    const env = layout.envelopes.town;
+    const ground = layout.envelopes.ground;
+    for (const axis of [0, 2]) {
+      expect(env.min[axis]).toBeGreaterThanOrEqual(ground.min[axis]);
+      expect(env.max[axis]).toBeLessThanOrEqual(ground.max[axis]);
+    }
+  });
+});
+
+describe('layout.dining', () => {
+  const d = layout.dining;
+  const f = layout.diningWing.footprint;
+  const inner = layout.diningWing.thickness / 2;
+  const half = d.top.size / 2;
+
+  it('seats four tables well inside the dining wing', () => {
+    expect(d.tables).toHaveLength(4);
+    for (const table of d.tables) {
+      expect(table.x - half).toBeGreaterThan(f.x[0] + inner);
+      expect(table.x + half).toBeLessThan(f.x[1] - inner);
+      expect(table.z - half).toBeGreaterThan(f.z[0] + inner);
+      expect(table.z + half).toBeLessThan(f.z[1] - inner);
+    }
+  });
+
+  it('keeps the back chairs clear of the north wall', () => {
+    for (const table of d.tables) {
+      const backEdge = table.z - d.chair.offset - d.chair.size / 2;
+      expect(backEdge, `table at z ${table.z}`).toBeGreaterThan(f.z[0] + inner);
+    }
+  });
+
+  it('never lets two delivery zones overlap', () => {
+    const zones = d.tables.map((table) => table.zone);
+    for (let a = 0; a < zones.length; a++) {
+      for (let b = a + 1; b < zones.length; b++) {
+        const hit =
+          zones[a].x[0] < zones[b].x[1] && zones[b].x[0] < zones[a].x[1] &&
+          zones[a].z[0] < zones[b].z[1] && zones[b].z[0] < zones[a].z[1];
+        expect(hit, `zones ${a} and ${b}`).toBe(false);
+      }
+    }
+  });
+
+  it('keeps every delivery zone off every table', () => {
+    for (const zone of d.tables.map((table) => table.zone)) {
+      for (const table of d.tables) {
+        const hit =
+          zone.x[0] < table.x + half && table.x - half < zone.x[1] &&
+          zone.z[0] < table.z + half && table.z - half < zone.z[1];
+        expect(hit, `zone over table at (${table.x}, ${table.z})`).toBe(false);
+      }
+    }
+  });
+
+  it('gives the tables timings that leave the room recoverable', () => {
+    // The three spec-fixed numbers, pinned exactly: a range check lets any of
+    // them drift to a value the spec never chose without a test noticing.
+    expect(d.eatSeconds).toBe(40);
+    expect(d.patienceSeconds).toBe(60);
+    expect(d.tablePrice).toBe(8);
+    expect(d.patienceSeconds).toBeGreaterThan(d.eatSeconds / 2);
+    expect(d.dineInChance).toBeGreaterThan(0);
+    expect(d.dineInChance).toBeLessThan(1);
+    expect(d.tablePrice).toBeGreaterThan(5);
+  });
+
+  it('keeps two lit banners from overlapping on screen', () => {
+    // A banner is a THREE.Sprite — a camera-facing billboard — so what decides
+    // overlap is how far apart two banners are ON SCREEN, not in 3D. The game
+    // camera looks down the diagonal, which foreshortens every gap: centring
+    // the banners on the zones put two of them 0.78 m apart on screen, which
+    // a 1.0 m banner still overlapped.
+    const c = layout.camera;
+    const half = c.frustumSize / 2;
+    const aspect = 16 / 9;
+    const camera = new THREE.OrthographicCamera(
+      -half * aspect, half * aspect, half, -half, 0.1, 400
+    );
+    const target = new THREE.Vector3(...c.target);
+    camera.position
+      .copy(target)
+      .add(new THREE.Vector3(...c.direction).normalize().multiplyScalar(c.distance));
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+
+    const onScreen = (t) => {
+      // Over the table, which is where simulation.js centres them.
+      const p = new THREE.Vector3(t.x, d.banner.y, t.z).project(camera);
+      return { x: p.x * half * aspect, y: p.y * half };
+    };
+
+    for (let a = 0; a < d.tables.length; a++) {
+      for (let b = a + 1; b < d.tables.length; b++) {
+        const p = onScreen(d.tables[a]);
+        const q = onScreen(d.tables[b]);
+        const dx = Math.abs(p.x - q.x);
+        const dy = Math.abs(p.y - q.y);
+        const clear = dx >= d.banner.width || dy >= d.banner.height;
+        expect(clear, `banners ${a} and ${b}: ${dx.toFixed(3)} x ${dy.toFixed(3)} apart on screen`).toBe(true);
+      }
+    }
   });
 });

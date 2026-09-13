@@ -71,4 +71,36 @@ describe('createOvenStock', () => {
     expect(run(oven, 0.2, inZone)).toBe(1);
     expect(oven.stock).toBe(0);
   });
+
+  // Pins the pickup cadence to 0.3 s regardless of frame rate. Waiting in
+  // the zone from a full oven, only the very first release is discretized
+  // (it fires on the step the player enters, before a full cooldown has
+  // elapsed), so the gap from that release to the tenth must land within
+  // one frame of nine clean 0.3 s cooldowns (2.7 s), at any dt.
+  function timeFromFirstToTenthPickup(dt) {
+    const oven = createOvenStock(layout);
+    const { bakeSeconds, ovenCapacity } = layout.sim.pizza;
+    for (let t = 0; t < bakeSeconds * ovenCapacity + 1 - 1e-9; t += dt) oven.update(dt, away);
+    expect(oven.stock).toBe(ovenCapacity);
+
+    const plenty = { inZone: true, room: 1000 };
+    let elapsed = 0;
+    let releases = 0;
+    let firstAt = null;
+    let tenthAt = null;
+    while (releases < 10) {
+      elapsed += dt;
+      if (oven.update(dt, plenty) === 1) {
+        releases++;
+        if (releases === 1) firstAt = elapsed;
+        if (releases === 10) tenthAt = elapsed;
+      }
+    }
+    return tenthAt - firstAt;
+  }
+
+  it('keeps a steady 0.3 s pickup cadence from the first release to the tenth, at any frame rate', () => {
+    expect(Math.abs(timeFromFirstToTenthPickup(1 / 60) - 2.7)).toBeLessThanOrEqual(1 / 60 + 1e-9);
+    expect(Math.abs(timeFromFirstToTenthPickup(0.05) - 2.7)).toBeLessThanOrEqual(0.05 + 1e-9);
+  });
 });

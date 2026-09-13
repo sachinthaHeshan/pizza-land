@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { createPedestrian, PEDESTRIAN_STATES } from '../../src/sim/pedestrian.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
+import { seatPosition } from '../../src/sim/paths.js';
+import { LEG_PROPORTIONS } from '../../src/models/figure.js';
 
 const bay = layout.sim.bays[0];
 
@@ -14,6 +16,8 @@ function world() {
     queueLength: () => 1,
     enqueueSlot: () => 1,
     canServe: () => true,
+    claimSeat: () => null,
+    sitDown: () => true,
     recordSale(pedestrian) {
       pedestrian.showBox();
     },
@@ -171,5 +175,145 @@ describe('createPedestrian', () => {
     const feet = p.figurePosition();
     expect(at.y).toBeGreaterThan(0.5);
     expect(Math.hypot(at.x - feet.x, at.z - feet.z)).toBeLessThan(0.5);
+  });
+
+  const person = layout.sim.people[0];
+
+  function dineInWorld(claim = { table: 0, seat: 0 }) {
+    let given = false;
+    const sat = [];
+    return {
+      ...world(),
+      sat,
+      claimSeat: () => {
+        if (given) return null;
+        given = true;
+        return claim;
+      },
+      sitDown: (table, seat) => {
+        sat.push({ table, seat });
+        return true;
+      },
+    };
+  }
+
+  function seatedPedestrian(claim = { table: 0, seat: 0 }) {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    const w = dineInWorld(claim);
+    p.start(bay);
+    run(p, w, 45);
+    return p;
+  }
+
+  it('names the two dining states', () => {
+    expect(PEDESTRIAN_STATES).toContain('WALKING_TO_TABLE');
+    expect(PEDESTRIAN_STATES).toContain('SEATED');
+  });
+
+  it('heads for a table instead of the queue when the room offers a seat', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    p.update(1 / 60, dineInWorld());
+    expect(p.state).toBe('WALKING_TO_TABLE');
+    expect(p.table).toBe(0);
+  });
+
+  it('queues exactly as before when the room offers nothing', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    const seen = new Set();
+    p.start(bay);
+    // Which route they took, not where they ended up: serving takes well
+    // under a second, so a fixed run length would only catch the last state.
+    run(p, world(), 30, 1 / 60, () => seen.add(p.state));
+    expect(seen.has('AT_COUNTER')).toBe(true);
+    expect(seen.has('WALKING_TO_TABLE')).toBe(false);
+    expect(seen.has('SEATED')).toBe(false);
+    expect(p.table).toBeNull();
+  });
+
+  it('arrives at its chair and sits down', () => {
+    const p = seatedPedestrian({ table: 2, seat: 1 });
+    expect(p.state).toBe('SEATED');
+    const seat = seatPosition(layout, 2, 1);
+    expect(p.figure.position.x).toBeCloseTo(seat.x, 2);
+    expect(p.figure.position.z).toBeCloseTo(seat.z, 2);
+  });
+
+  it('sits with its hips on the chair and its legs swung forward', () => {
+    const p = seatedPedestrian();
+    const chair = layout.dining.chair;
+    const hip = p.figure.position.y + person.height * LEG_PROPORTIONS.hip;
+    expect(hip).toBeCloseTo(chair.seatHeight + chair.seatThickness, 5);
+    const limbs = p.figure.userData.limbs;
+    expect(limbs.legL.rotation.x).toBeCloseTo(-Math.PI / 2, 6);
+    expect(limbs.legR.rotation.x).toBeCloseTo(-Math.PI / 2, 6);
+  });
+
+  it('keeps a seated head above the tabletop, where the camera can see it', () => {
+    const p = seatedPedestrian();
+    const headTop = p.figure.position.y + person.height * 0.9;
+    expect(headTop).toBeGreaterThan(layout.dining.top.height + layout.dining.top.thickness);
+  });
+
+  it('faces the table it is sitting at', () => {
+    const near = seatedPedestrian({ table: 0, seat: 0 });
+    const far = seatedPedestrian({ table: 0, seat: 1 });
+    // Seat 0 sits at +z and looks back along -z; seat 1 looks the other way.
+    expect(Math.cos(near.figure.rotation.y)).toBeLessThan(0);
+    expect(Math.cos(far.figure.rotation.y)).toBeGreaterThan(0);
+  });
+
+  it('stands up and walks out when its table is done', () => {
+    const p = seatedPedestrian();
+    const w = dineInWorld();
+    p.leaveTable();
+    expect(p.state).toBe('WALKING_OUT');
+    expect(p.table).toBeNull();
+    expect(p.figure.position.y).toBe(0);
+    expect(p.figure.userData.limbs.legL.rotation.x).toBe(0);
+    run(p, w, 60);
+    expect(p.isDone()).toBe(true);
+  });
+
+  it('ignores leaveTable unless it is on its way to a table or seated', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    p.start(bay);
+    p.leaveTable();
+    expect(p.state).toBe('WALKING_IN');
+  });
+
+  it('tells the room it has sat down, once, on arrival', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    const w = dineInWorld({ table: 3, seat: 1 });
+    p.start(bay);
+    // Halfway through the walk nobody is in the chair yet, so the room must
+    // not have been told: that is what keeps patience off the walk.
+    run(p, w, 5);
+    expect(p.state).toBe('WALKING_TO_TABLE');
+    expect(w.sat).toEqual([]);
+
+    run(p, w, 40);
+    expect(p.state).toBe('SEATED');
+    expect(w.sat).toEqual([{ table: 3, seat: 1 }]);
+  });
+
+  it('turns round mid-walk when its table empties before it arrives', () => {
+    const p = createPedestrian(stubMaterials(), layout, { index: 0 });
+    const w = dineInWorld({ table: 2, seat: 0 });
+    p.start(bay);
+    run(p, w, 5);
+    expect(p.state).toBe('WALKING_TO_TABLE');
+    const turnedAt = p.figurePosition();
+
+    p.leaveTable();
+    expect(p.state).toBe('WALKING_OUT');
+    expect(p.table).toBeNull();
+    // No teleport to a chair it never reached.
+    expect(p.figurePosition().distanceTo(turnedAt)).toBeLessThan(1e-6);
+
+    run(p, w, 60);
+    expect(p.isDone()).toBe(true);
+    // It never sat, so the room was never told anybody was in the chair.
+    expect(w.sat).toEqual([]);
   });
 });

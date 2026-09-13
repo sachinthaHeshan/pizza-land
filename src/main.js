@@ -4,9 +4,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { createTextures } from "./textures.js";
 import { createMaterials } from "./materials.js";
 import { createShop } from "./scene.js";
+import { followSun } from "./lighting.js";
 import { layout } from "./layout.js";
 import { createHorn } from "./sim/audio.js";
-import { nextSimSpeed, labelSimSpeed } from "./sim/speed.js";
+import hornSampleUrl from "./asserts/audio/double-car-honk.mp3";
+import { DEFAULT_SIM_SPEED, nextSimSpeed, labelSimSpeed } from "./sim/speed.js";
 import { panTargetLimits, clampPanTarget } from "./ui/panBounds.js";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -34,7 +36,9 @@ for (const texture of Object.values(textures)) {
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 }
 const materials = createMaterials(textures);
-const horn = createHorn(() => new (window.AudioContext || window.webkitAudioContext)());
+const horn = createHorn(() => new (window.AudioContext || window.webkitAudioContext)(), {
+  sampleUrl: hornSampleUrl,
+});
 const shop = createShop(materials, layout, { horn });
 scene.add(shop);
 
@@ -142,8 +146,9 @@ soundButton.addEventListener('click', () => {
   soundButton.hidden = true;
 });
 
-let simSpeed = 1;
+let simSpeed = DEFAULT_SIM_SPEED;
 const speedButton = document.getElementById('speed');
+speedButton.textContent = labelSimSpeed(simSpeed);
 speedButton.addEventListener('click', () => {
   simSpeed = nextSimSpeed(simSpeed);
   speedButton.textContent = labelSimSpeed(simSpeed);
@@ -167,6 +172,7 @@ function animate() {
   balanceLabel.textContent = `$${shop.userData.simulation.balance}`;
   controls.update();
   clampPan();
+  followSun(shop.userData.sun, controls.target, layout);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }

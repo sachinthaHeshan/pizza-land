@@ -35,7 +35,7 @@ describe('createMaterials', () => {
 
   it('declares a positive world tile size for every mapped material', () => {
     // Artwork is stretched across its face once rather than tiled.
-    const artwork = ['sign', 'sellBanner', 'ovenBanner'];
+    const artwork = ['sign', 'sellBanner', 'ovenBanner', 'tableBanner'];
     for (const [key, material] of Object.entries(materials)) {
       if (!material.map) continue;
       const tile = material.userData.tile;
@@ -79,5 +79,29 @@ describe('createMaterials', () => {
     const textures = createTextures(stubCanvasFactory());
     const m = createMaterials(textures);
     expect(m.brick.map).toBe(textures.brick);
+  });
+
+  it('gives the town its wall, roof, foliage and awning materials', () => {
+    const textures = createTextures(stubCanvasFactory());
+    const m = createMaterials(textures);
+    const flat = ['wallMint', 'wallPeach', 'wallSky', 'wallButter', 'roofRed', 'roofSlate', 'foliage', 'pine', 'bark', 'hedge'];
+    for (const key of flat) {
+      expect(m[key], key).toBeInstanceOf(THREE.MeshStandardMaterial);
+    }
+    expect(m.stripeBlue.map).toBe(textures.stripeBlue);
+    expect(m.stripeGreen.map).toBe(textures.stripeGreen);
+    expect(m.stripeBlue.userData.tile).toBe(m.stripe.userData.tile);
+    expect(m.stripeGreen.userData.tile).toBe(m.stripe.userData.tile);
+    expect(m.foliage.flatShading).toBe(true);
+    expect(m.pine.flatShading).toBe(true);
+  });
+
+  it('gives the tables an unlit banner sprite material', () => {
+    const materials = createMaterials(createTextures(stubCanvasFactory()));
+    const banner = materials.tableBanner;
+    expect(banner).toBeInstanceOf(THREE.SpriteMaterial);
+    expect(banner.transparent).toBe(true);
+    expect(banner.toneMapped).toBe(false);
+    expect(banner.depthWrite).toBe(false);
   });
 });

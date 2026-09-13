@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { nextSimSpeed, labelSimSpeed } from '../../src/sim/speed.js';
+import { DEFAULT_SIM_SPEED, nextSimSpeed, labelSimSpeed } from '../../src/sim/speed.js';
+
+describe('DEFAULT_SIM_SPEED', () => {
+  it('starts the simulation at 3x', () => {
+    expect(DEFAULT_SIM_SPEED).toBe(3);
+  });
+});
 
 describe('nextSimSpeed', () => {
   it('cycles 1 → 2 → 3 → 5 → 1', () => {

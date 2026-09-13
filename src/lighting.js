@@ -18,8 +18,8 @@ export function createLighting(layout, anchors) {
   sun.shadow.camera.right = b;
   sun.shadow.camera.top = b;
   sun.shadow.camera.bottom = -b;
-  sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 120;
+  sun.shadow.camera.near = l.sun.shadowNear;
+  sun.shadow.camera.far = l.sun.shadowFar;
   sun.shadow.camera.updateProjectionMatrix();
 
   group.add(sun);
@@ -32,5 +32,41 @@ export function createLighting(layout, anchors) {
     group.add(light);
   }
 
+  group.userData.sun = sun;
+
   return group;
+}
+
+const _basis = new THREE.Matrix4();
+const _right = new THREE.Vector3();
+const _up = new THREE.Vector3();
+const _back = new THREE.Vector3();
+const _offset = new THREE.Vector3();
+const _origin = new THREE.Vector3();
+const _worldUp = new THREE.Vector3(0, 1, 0);
+
+// Moves the sun so its shadow box follows whatever the camera is looking at.
+// The target is snapped to whole shadow texels first: without that, shadow
+// edges crawl across every surface while the view pans.
+export function followSun(sun, target, layout) {
+  const { position, shadowBounds, shadowMapSize } = layout.lighting.sun;
+  const texel = (2 * shadowBounds) / shadowMapSize;
+  _offset.set(...position);
+  _basis.lookAt(_offset, _origin, _worldUp);
+  _right.setFromMatrixColumn(_basis, 0);
+  _up.setFromMatrixColumn(_basis, 1);
+  _back.setFromMatrixColumn(_basis, 2);
+
+  const alongRight = Math.round(target.dot(_right) / texel) * texel;
+  const alongUp = Math.round(target.dot(_up) / texel) * texel;
+  const alongBack = target.dot(_back);
+
+  sun.target.position
+    .copy(_right)
+    .multiplyScalar(alongRight)
+    .addScaledVector(_up, alongUp)
+    .addScaledVector(_back, alongBack);
+  sun.position.copy(sun.target.position).add(_offset);
+  sun.target.updateMatrixWorld();
+  sun.updateMatrixWorld();
 }

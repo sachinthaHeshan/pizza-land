@@ -34,11 +34,13 @@ describe('main.js render loop', () => {
   });
 
   it('lets a HUD button cycle the simulation through 1x, 2x, 3x, and 5x', () => {
-    expect(source).toMatch(/import \{ nextSimSpeed, labelSimSpeed \} from ["']\.\/sim\/speed\.js["']/);
+    expect(source).toMatch(/import \{ DEFAULT_SIM_SPEED, nextSimSpeed, labelSimSpeed \} from ["']\.\/sim\/speed\.js["']/);
     expect(source).toMatch(/document\.getElementById\(['"]speed['"]\)/);
+    expect(source).toMatch(/let simSpeed = DEFAULT_SIM_SPEED/);
+    expect(source).toMatch(/speedButton\.textContent = labelSimSpeed\(simSpeed\)/);
     expect(source).toMatch(/speedButton\.addEventListener\('click'/);
     expect(source).toMatch(/simSpeed = nextSimSpeed\(simSpeed\)/);
-    expect(source).toMatch(/speedButton\.textContent = labelSimSpeed\(simSpeed\)/);
+    expect(html).toMatch(/id="speed"[^>]*>3x</);
   });
 
   it('paints the money balance onto a top-right HUD label each frame', () => {
@@ -84,6 +86,7 @@ describe('main.js render loop', () => {
     // when the import is missing, which is exactly how a ReferenceError once
     // reached the browser with this suite green.
     expect(source).toMatch(/import \{ createHorn \} from ["']\.\/sim\/audio\.js["']/);
+    expect(source).toMatch(/double-car-honk\.mp3/);
     expect(source).toMatch(/createHorn\(/);
     expect(source).toMatch(/soundButton\.addEventListener\('click'/);
     expect(source).toMatch(/horn\.enable\(\)/);
@@ -91,5 +94,10 @@ describe('main.js render loop', () => {
 
   it('hands the horn to the scene', () => {
     expect(source).toMatch(/createShop\(materials, layout, \{ horn \}\)/);
+  });
+
+  it('moves the sun with the camera each frame', () => {
+    expect(source).toMatch(/import \{ followSun \} from ["']\.\/lighting\.js["']/);
+    expect(source).toMatch(/followSun\(\s*shop\.userData\.sun\s*,\s*controls\.target\s*,\s*layout\s*\)/);
   });
 });

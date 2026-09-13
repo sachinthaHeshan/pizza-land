@@ -31,7 +31,18 @@ function dashedOutline(zone, { dash = 0.2, gap = 0.12, width = 0.06 } = {}) {
 // rising from it, and a banner that always faces the camera. The caller
 // decides when it pulses and when the banner shows. Pulsing changes material
 // opacity, so each marker clones its glow materials rather than sharing them.
-export function createZoneMarker(materials, { name, zone, outlineY, bannerMaterial, banner: spec }) {
+export function createZoneMarker(materials, {
+  name,
+  zone,
+  outlineY,
+  bannerMaterial,
+  banner: spec,
+  // Where the banner floats. Defaults to the zone's own centre; the dining
+  // tables override it so each banner sits over its table instead of over
+  // the patch of floor you stand on, which also keeps neighbouring banners
+  // from overlapping on screen.
+  bannerCentre,
+}) {
   const group = new THREE.Group();
   group.name = name;
 
@@ -63,7 +74,7 @@ export function createZoneMarker(materials, { name, zone, outlineY, bannerMateri
   const banner = new THREE.Sprite(bannerMaterial);
   banner.name = 'zoneBanner';
   banner.scale.set(spec.width, spec.height, 1);
-  banner.position.set(centreX, spec.y, centreZ);
+  banner.position.set(bannerCentre?.x ?? centreX, spec.y, bannerCentre?.z ?? centreZ);
   banner.renderOrder = 3;
   group.add(banner);
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { createTextures, TEXTURE_KEYS } from '../src/textures.js';
+import { layout } from '../src/layout.js';
 import { stubCanvasFactory } from './helpers/stubs.js';
 
 describe('createTextures', () => {
@@ -85,5 +86,63 @@ describe('createTextures', () => {
     banner.userData.setCount(3, 10);
     expect(calls.length).toBe(drawn);
     expect(banner.version).toBe(redrawn);
+  });
+
+  it('keeps the oven banner sprite the same shape as its count canvas', () => {
+    const factory = stubCanvasFactory();
+    const canvases = [];
+    createTextures((w, h) => {
+      const c = factory(w, h);
+      canvases.push(c);
+      return c;
+    });
+    const canvas = canvases[TEXTURE_KEYS.indexOf('ovenBanner')];
+    expect(layout.oven.banner.width / layout.oven.banner.height).toBeCloseTo(
+      canvas.width / canvas.height
+    );
+  });
+
+  it('draws ten-band blue and green awning stripes alongside the red one', () => {
+    expect(TEXTURE_KEYS).toEqual(expect.arrayContaining(['stripe', 'stripeBlue', 'stripeGreen']));
+    const factory = stubCanvasFactory();
+    const canvases = [];
+    createTextures((w, h) => {
+      const c = factory(w, h);
+      canvases.push(c);
+      return c;
+    });
+    const colours = (key) =>
+      new Set(
+        canvases[TEXTURE_KEYS.indexOf(key)].__calls
+          .filter(([method, prop]) => method === 'set' && prop === 'fillStyle')
+          .map(([, , value]) => value)
+      );
+    for (const key of ['stripe', 'stripeBlue', 'stripeGreen']) {
+      const rects = canvases[TEXTURE_KEYS.indexOf(key)].__calls.filter(([m]) => m === 'fillRect');
+      expect(rects, key).toHaveLength(10);
+    }
+    // Colour is the only thing that distinguishes the three.
+    expect(colours('stripe')).toEqual(new Set(['#d8382f', '#f6efe4']));
+    expect(colours('stripeBlue')).toEqual(new Set(['#2f6fb0', '#f6efe4']));
+    expect(colours('stripeGreen')).toEqual(new Set(['#3f8a4f', '#f6efe4']));
+  });
+
+  it('letters SERVE onto the table banner', () => {
+    expect(TEXTURE_KEYS).toContain('tableBanner');
+    const factory = stubCanvasFactory();
+    const canvases = [];
+    createTextures((w, h) => {
+      const c = factory(w, h);
+      canvases.push(c);
+      return c;
+    });
+    const banner = canvases[TEXTURE_KEYS.indexOf('tableBanner')];
+    const words = banner.__calls
+      .filter(([method]) => method === 'fillText')
+      .map(([, text]) => text);
+    expect(words).toEqual(expect.arrayContaining(['SERVE']));
+    expect(layout.dining.banner.width / layout.dining.banner.height).toBeCloseTo(
+      banner.width / banner.height
+    );
   });
 });

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { createSimulation } from '../../src/sim/simulation.js';
 import { slotPosition } from '../../src/sim/paths.js';
+import { PEDESTRIAN_STATES } from '../../src/sim/pedestrian.js';
 import { layout } from '../../src/layout.js';
 import { stubMaterials } from '../helpers/stubs.js';
 
@@ -80,6 +81,10 @@ describe('createSimulation', () => {
     sim.world.recordSale(customer);
     expect(sim.balance).toBe(5);
     expect(sim.player.carried).toBe(1);
+
+    sim.world.recordSale(customer);
+    expect(sim.balance).toBe(10);
+    expect(sim.player.carried).toBe(0);
   });
 
   it('marks the sell and oven zones in the scene', () => {
@@ -211,7 +216,9 @@ describe('createSimulation', () => {
 
   it('keeps every pedestrian in a valid state while traffic runs', () => {
     const sim = createSimulation(stubMaterials(), layout);
-    const valid = ['IDLE', 'WALKING_IN', 'QUEUEING', 'AT_COUNTER', 'WALKING_OUT', 'DONE'];
+    // Derived, not hard-coded: this list drifted the moment the dining
+    // states were added, and the exported one is the single source of truth.
+    const valid = PEDESTRIAN_STATES;
     for (let t = 0; t < 60; t += 1 / 60) {
       sim.update(1 / 60);
       for (const p of sim.pedestrians) expect(valid).toContain(p.state);
@@ -322,5 +329,283 @@ describe('createSimulation', () => {
     expect(maxParked).toBeGreaterThanOrEqual(layout.sim.bays.length - 1);
     expect(waited).toBe(true);
     expect(honks).toBeGreaterThan(0);
+  });
+
+  const dining = layout.dining;
+  // The player reads keys as a Set; an object literal is not one.
+  const NO_KEYS = new Set();
+
+  // The dine-in draw is seeded at 0.5, so ask until it says yes. Bounded, so a
+  // bad seed fails loudly instead of hanging the suite.
+  function seatSomeone(sim) {
+    for (let i = 0; i < 100; i++) {
+      const claim = sim.room.claimSeat();
+      if (claim) return claim;
+    }
+    throw new Error('the seeded draw never offered a seat');
+  }
+
+  // Claiming only reserves a chair now; the table starts wanting a pizza when
+  // the walker sits down. Tests that need a WAITING table do both.
+  function seatSomeoneDown(sim) {
+    const claim = seatSomeone(sim);
+    sim.room.sit(claim.table, claim.seat);
+    return claim;
+  }
+
+  function standAt(sim, zone) {
+    sim.player.figure.position.set(
+      (zone.x[0] + zone.x[1]) / 2,
+      0,
+      (zone.z[0] + zone.z[1]) / 2
+    );
+  }
+
+  const waitingIndex = (sim) => sim.room.tables.findIndex((t) => t.state === 'WAITING');
+
+  // The delivered boxes are the only pizza boxes parented straight to the
+  // simulation group: a customer's rides inside their own group, a flying one
+  // inside pizzaHops, a carried one inside the player's stack.
+  const tableBoxes = (sim) => sim.group.children.filter((c) => c.name === 'pizzaBox');
+  const boxFor = (sim, tables, i) =>
+    tableBoxes(sim).find(
+      (b) =>
+        Math.abs(b.position.x - tables[i].x) < 1e-9 &&
+        Math.abs(b.position.z - tables[i].z) < 1e-9
+    );
+
+  it('floats each table banner over its own table, not over its zone', () => {
+    // The zone is the patch of floor you stand on, a metre to the side. Over
+    // the zone, two banners in a column come within 1.556 m on screen and a
+    // 1.5 m banner has nowhere to go; over the tables they are clear.
+    const sim = createSimulation(stubMaterials(), layout);
+    sim.update(1 / 60, NO_KEYS);
+    for (const [i, spot] of dining.tables.entries()) {
+      const banner = sim.tablePoints[i].children.find((c) => c.name === 'zoneBanner');
+      expect(banner.position.x, `banner ${i} x`).toBeCloseTo(spot.x, 6);
+      expect(banner.position.z, `banner ${i} z`).toBeCloseTo(spot.z, 6);
+    }
+  });
+
+  it('builds one marker and one hidden box per table', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    expect(sim.tablePoints).toHaveLength(dining.tables.length);
+    expect(sim.room.tables).toHaveLength(dining.tables.length);
+
+    const boxes = tableBoxes(sim);
+    expect(boxes).toHaveLength(dining.tables.length);
+    for (const box of boxes) {
+      expect(box.parent).toBe(sim.group);
+      expect(box.visible).toBe(false);
+    }
+    // One per table, each parked over its own tabletop.
+    for (let i = 0; i < dining.tables.length; i++) {
+      expect(boxFor(sim, dining.tables, i), `box for table ${i}`).toBeDefined();
+    }
+  });
+
+  it('rests each delivered box on the tabletop rather than inside it', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const surface = dining.top.height + dining.top.thickness;
+    sim.group.updateMatrixWorld(true);
+    for (let i = 0; i < dining.tables.length; i++) {
+      const bounds = new THREE.Box3().setFromObject(boxFor(sim, dining.tables, i));
+      // createPizzaBox is centred on its own origin, so a centre placed on
+      // the surface sinks the box half its thickness into the slab.
+      expect(bounds.min.y, `box ${i} underside`).toBeGreaterThanOrEqual(surface - 1e-9);
+      expect(bounds.min.y, `box ${i} underside`).toBeCloseTo(surface, 6);
+    }
+  });
+
+  it('shows a delivered box only once its hop lands, and clears it after', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    seatSomeoneDown(sim);
+    const index = waitingIndex(sim);
+    const box = boxFor(sim, dining.tables, index);
+    sim.player.receive();
+    standAt(sim, dining.tables[index].zone);
+
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.room.tables[index].state).toBe('EATING');
+    // Paid for, but still in the air: the box appears where it lands.
+    expect(box.visible).toBe(false);
+
+    for (let t = 0; t < layout.sim.pizza.hopSeconds + 0.1; t += 1 / 60) {
+      sim.update(1 / 60, NO_KEYS);
+    }
+    expect(box.visible).toBe(true);
+    expect(tableBoxes(sim).filter((b) => b.visible)).toHaveLength(1);
+
+    // The table clears when the meal ends.
+    for (let t = 0; t < dining.eatSeconds + 1; t += 1 / 30) sim.update(1 / 30, NO_KEYS);
+    expect(sim.room.tables[index].state).toBe('EMPTY');
+    expect(box.visible).toBe(false);
+  });
+
+  it('serves at most one table in a single frame', () => {
+    // Two tables sharing one zone. The real layout keeps the zones apart so
+    // the player is never inside two at once — which is exactly why the rule
+    // needs pinning here instead of leaning on the geometry.
+    const zone = dining.tables[0].zone;
+    const shared = {
+      ...layout,
+      dining: {
+        ...dining,
+        dineInChance: 1,
+        tables: [
+          { ...dining.tables[0], zone },
+          { ...dining.tables[1], zone },
+        ],
+      },
+    };
+    const sim = createSimulation(stubMaterials(), shared);
+    sim.room.sit(0, 0);
+    sim.room.sit(1, 0);
+    expect(sim.room.wants(0)).toBe(true);
+    expect(sim.room.wants(1)).toBe(true);
+
+    sim.player.receive();
+    sim.player.receive();
+    standAt(sim, zone);
+
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(dining.tablePrice);
+    expect(sim.player.carried).toBe(1);
+    expect(sim.room.tables.filter((t) => t.state === 'EATING')).toHaveLength(1);
+
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(dining.tablePrice * 2);
+    expect(sim.player.carried).toBe(0);
+    expect(sim.room.tables.filter((t) => t.state === 'EATING')).toHaveLength(2);
+  });
+
+  it('pays the table price and spends one carried pizza', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    seatSomeoneDown(sim);
+    const index = waitingIndex(sim);
+    sim.player.receive();
+    sim.player.receive();
+    standAt(sim, dining.tables[index].zone);
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(dining.tablePrice);
+    expect(sim.player.carried).toBe(1);
+    expect(sim.room.tables[index].state).toBe('EATING');
+  });
+
+  it('serves nothing while the player stands outside every zone', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    seatSomeoneDown(sim);
+    sim.player.receive();
+    sim.player.figure.position.set(0, 0, 0);
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(0);
+    expect(sim.player.carried).toBe(1);
+  });
+
+  it('serves nothing with empty hands', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    seatSomeoneDown(sim);
+    const index = waitingIndex(sim);
+    standAt(sim, dining.tables[index].zone);
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(0);
+    expect(sim.room.tables[index].state).toBe('WAITING');
+  });
+
+  it('stops charging once the table is eating', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    seatSomeoneDown(sim);
+    const index = waitingIndex(sim);
+    sim.player.receive();
+    sim.player.receive();
+    standAt(sim, dining.tables[index].zone);
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(dining.tablePrice);
+    // Still standing in the zone, still carrying: the meal is under way, so
+    // serve() refuses and nothing more is taken.
+    sim.update(1 / 60, NO_KEYS);
+    sim.update(1 / 60, NO_KEYS);
+    expect(sim.balance).toBe(dining.tablePrice);
+    expect(sim.player.carried).toBe(1);
+  });
+
+  it('shows a table banner only while that table wants a pizza', () => {
+    const sim = createSimulation(stubMaterials(), layout);
+    const banner = (i) => sim.tablePoints[i].children.find((c) => c.name === 'zoneBanner');
+    sim.update(1 / 60, NO_KEYS);
+    for (let i = 0; i < sim.tablePoints.length; i++) expect(banner(i).visible).toBe(false);
+
+    seatSomeoneDown(sim);
+    const index = waitingIndex(sim);
+    sim.update(1 / 60, NO_KEYS);
+    expect(banner(index).visible).toBe(true);
+
+    sim.player.receive();
+    standAt(sim, dining.tables[index].zone);
+    sim.update(1 / 60, NO_KEYS);
+    expect(banner(index).visible).toBe(false);
+  });
+
+  it('sends diners home when their table empties', () => {
+    // dineInChance 1 so the first customer certainly takes a seat: a test
+    // that only sometimes exercises the path is a test that proves nothing.
+    const always = { ...layout, dining: { ...dining, dineInChance: 1 } };
+    const sim = createSimulation(stubMaterials(), always);
+    const diner = sim.pedestrians[0];
+    diner.start(layout.sim.bays[0]);
+    for (let t = 0; t < 45; t += 1 / 60) sim.update(1 / 60, NO_KEYS);
+    expect(diner.state).toBe('SEATED');
+
+    const index = diner.table;
+    expect(sim.room.serve(index)).toBe(true);
+    for (let t = 0; t < dining.eatSeconds + 1; t += 1 / 30) sim.update(1 / 30, NO_KEYS);
+    expect(sim.room.tables[index].state).toBe('EMPTY');
+    expect(diner.state).not.toBe('SEATED');
+    expect(diner.table).toBeNull();
+  });
+
+  it('starts a diner waiting when they sit, not when they set off', () => {
+    const always = { ...layout, dining: { ...dining, dineInChance: 1 } };
+    const sim = createSimulation(stubMaterials(), always);
+    const diner = sim.pedestrians[0];
+    diner.start(layout.sim.bays[0]);
+    // One step is enough to make the dine-in decision and set the route.
+    sim.update(1 / 60, NO_KEYS);
+    expect(diner.state).toBe('WALKING_TO_TABLE');
+    const index = diner.table;
+    expect(sim.room.tables[index].state).toBe('EMPTY');
+    expect(sim.room.wants(index)).toBe(false);
+
+    for (let t = 0; t < 45 && diner.state !== 'SEATED'; t += 1 / 60) {
+      sim.update(1 / 60, NO_KEYS);
+    }
+    expect(diner.state).toBe('SEATED');
+    expect(sim.room.tables[index].state).toBe('WAITING');
+    // The whole patience is still there: none of it was spent on the walk.
+    expect(sim.room.tables[index].secondsLeft).toBeGreaterThan(dining.patienceSeconds - 0.1);
+  });
+
+  it('never strands a diner at a table that emptied while they walked', () => {
+    // The walk from the car takes ~14 s, so a patience this short expires
+    // before anybody arrives. Every diner is released mid-walk or seated at a
+    // table that is genuinely theirs; nobody sits at an EMPTY one forever,
+    // holding a parking bay and a car with them.
+    const impatient = {
+      ...layout,
+      dining: { ...dining, dineInChance: 1, patienceSeconds: 5 },
+    };
+    const sim = createSimulation(stubMaterials(), impatient);
+    const everDone = new Set();
+    for (let t = 0; t < 300; t += 1 / 30) {
+      sim.update(1 / 30, NO_KEYS);
+      sim.pedestrians.forEach((p, i) => {
+        if (p.state === 'DONE') everDone.add(i);
+        if (p.state !== 'SEATED') return;
+        expect(sim.room.tables[p.table].state, `pedestrian ${i} at t=${t.toFixed(1)}`)
+          .not.toBe('EMPTY');
+      });
+    }
+    // Every pedestrian and every car keeps cycling: none is lost to the room.
+    expect(everDone.size).toBe(layout.sim.pedestrians);
   });
 });

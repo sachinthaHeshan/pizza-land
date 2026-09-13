@@ -1,3 +1,5 @@
+export const DEFAULT_SIM_SPEED = 3;
+
 const SPEEDS = [1, 2, 3, 5];
 
 export function nextSimSpeed(current) {

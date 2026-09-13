@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { box, wallRun, yOnFloor, trimSpanAtPillars, meetInnerFace } from '../utils/geometry.js';
+import { createDiningTable } from '../models/diningTable.js';
 
 export function createDiningWing(materials, layout) {
   const group = new THREE.Group();
@@ -126,6 +127,10 @@ export function createDiningWing(materials, layout) {
       thickness: t,
     })
   );
+
+  for (const spot of layout.dining.tables) {
+    group.add(createDiningTable(materials, layout, spot));
+  }
 
   return group;
 }

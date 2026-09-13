@@ -49,6 +49,19 @@ export const MATERIAL_KEYS = [
   'markerBeam',
   'markerEdge',
   'ovenBanner',
+  'wallMint',
+  'wallPeach',
+  'wallSky',
+  'wallButter',
+  'roofRed',
+  'roofSlate',
+  'foliage',
+  'pine',
+  'bark',
+  'hedge',
+  'stripeBlue',
+  'stripeGreen',
+  'tableBanner',
 ];
 
 // World units spanned by one full texture image. The geometry helpers scale
@@ -60,6 +73,8 @@ const TILE = {
   terracotta: 2.1,
   wallTile: 1.2,
   stripe: 3.5,
+  stripeBlue: 3.5,
+  stripeGreen: 3.5,
   wood: 1.5,
   plaster: 3.0,
   paving: 3.6,
@@ -68,6 +83,7 @@ const TILE = {
   sign: null,
   sellBanner: null,
   ovenBanner: null,
+  tableBanner: null,
 };
 
 export function createMaterials(textures) {
@@ -158,8 +174,8 @@ export function createMaterials(textures) {
     horn: new THREE.MeshBasicMaterial({ name: 'horn', color: 0xffd66b, depthWrite: false }),
     glow: new THREE.MeshBasicMaterial({ name: 'glow', color: 0xffcf8a, depthWrite: false }),
     ember: new THREE.MeshBasicMaterial({ name: 'ember', color: 0xff7a2a, depthWrite: false }),
-    // The sell marker is UI laid into the world: unlit, and kept out of tone
-    // mapping so its yellows stay as bright as the artwork.
+    // Zone markers and their banners are UI laid into the world: unlit, and
+    // kept out of tone mapping so their yellows stay as bright as the artwork.
     sellBanner: new THREE.SpriteMaterial({
       name: 'sellBanner',
       map: textures.sellBanner,
@@ -170,6 +186,13 @@ export function createMaterials(textures) {
     ovenBanner: new THREE.SpriteMaterial({
       name: 'ovenBanner',
       map: textures.ovenBanner,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+    tableBanner: new THREE.SpriteMaterial({
+      name: 'tableBanner',
+      map: textures.tableBanner,
       transparent: true,
       depthWrite: false,
       toneMapped: false,
@@ -190,6 +213,20 @@ export function createMaterials(textures) {
       depthWrite: false,
       toneMapped: false,
     }),
+    // Town palette. Foliage is flat-shaded so the low-poly canopies read as
+    // facets rather than blobs.
+    wallMint: standard('wallMint', { color: 0xb8dcc3, roughness: 0.9, metalness: 0.0 }),
+    wallPeach: standard('wallPeach', { color: 0xf2c4a4, roughness: 0.9, metalness: 0.0 }),
+    wallSky: standard('wallSky', { color: 0xb7d3ea, roughness: 0.9, metalness: 0.0 }),
+    wallButter: standard('wallButter', { color: 0xf3e2a0, roughness: 0.9, metalness: 0.0 }),
+    roofRed: standard('roofRed', { color: 0xb5553a, roughness: 0.8, metalness: 0.02 }),
+    roofSlate: standard('roofSlate', { color: 0x5d6570, roughness: 0.75, metalness: 0.05 }),
+    foliage: standard('foliage', { color: 0x5f9a4a, roughness: 0.85, metalness: 0.0, flatShading: true }),
+    pine: standard('pine', { color: 0x3f6f45, roughness: 0.85, metalness: 0.0, flatShading: true }),
+    bark: standard('bark', { color: 0x6b4a33, roughness: 0.9, metalness: 0.0 }),
+    hedge: standard('hedge', { color: 0x4a7a3f, roughness: 0.9, metalness: 0.0 }),
+    stripeBlue: standard('stripeBlue', { map: textures.stripeBlue, roughness: 0.7, metalness: 0.02, side: THREE.DoubleSide }),
+    stripeGreen: standard('stripeGreen', { map: textures.stripeGreen, roughness: 0.7, metalness: 0.02, side: THREE.DoubleSide }),
   };
 
   for (const [key, material] of Object.entries(materials)) {

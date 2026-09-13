@@ -1,13 +1,23 @@
 import * as THREE from 'three';
-import { createFigure } from '../models/figure.js';
+import { createFigure, LEG_PROPORTIONS } from '../models/figure.js';
 import { createPizzaBox } from '../models/pizzaBox.js';
-import { walkInPath, walkOutPath, doorPosition, slotPosition } from './paths.js';
+import {
+  walkInPath,
+  walkOutPath,
+  doorPosition,
+  slotPosition,
+  seatPosition,
+  walkToSeatPath,
+  walkFromSeatPath,
+} from './paths.js';
 
 export const PEDESTRIAN_STATES = Object.freeze([
   'IDLE',
   'WALKING_IN',
   'QUEUEING',
   'AT_COUNTER',
+  'WALKING_TO_TABLE',
+  'SEATED',
   'WALKING_OUT',
   'DONE',
 ]);
@@ -43,6 +53,20 @@ function createFollower() {
       }
       if (this.index >= this.path.length) this.index = this.path.length - 1;
       this.done = false;
+    },
+
+    // Turn round mid-route: retrace the waypoints already passed, starting
+    // from where the walker stands right now rather than snapping back to
+    // the start of the path.
+    turnBack() {
+      const passed = this.path ? this.path.slice(0, this.index) : [];
+      // With nothing behind them there is nowhere to retrace to, and a
+      // one-point path would finish the walk on the spot. Unreachable today,
+      // since set() always leaves index >= 1 — guarded so a future caller
+      // cannot strand a walker wherever it happens to be standing.
+      if (passed.length === 0) return false;
+      this.set([{ x: this.x, z: this.z }, ...passed.reverse()]);
+      return true;
     },
 
     step(dt, speed) {
@@ -93,6 +117,8 @@ export function createPedestrian(materials, layout, { index }) {
   let timer = 0;
   let stridePhase = 0;
   let slot = null;
+  let table = null;
+  let seat = null;
   let bay = null;
 
   const boxHeight = person.height * 0.52;
@@ -130,6 +156,29 @@ export function createPedestrian(materials, layout, { index }) {
     }
   }
 
+  // Sitting is the standing figure dropped so its hips meet the chair, with
+  // both legs swung forward under the table. -PI/2 is forward because the
+  // figure is built facing +z. The tabletop hides the legs from this camera,
+  // which is why a knee joint is not worth modelling.
+  function sit() {
+    const spot = seatPosition(layout, table, seat);
+    const centre = layout.dining.tables[table];
+    place(spot.x, spot.z, Math.atan2(centre.x - spot.x, centre.z - spot.z));
+    const chair = layout.dining.chair;
+    figure.position.y =
+      chair.seatHeight + chair.seatThickness - person.height * LEG_PROPORTIONS.hip;
+    const limbs = figure.userData.limbs;
+    limbs.legL.rotation.x = -Math.PI / 2;
+    limbs.legR.rotation.x = -Math.PI / 2;
+    limbs.armL.rotation.x = 0;
+    limbs.armR.rotation.x = 0;
+  }
+
+  function stand() {
+    figure.position.y = 0;
+    for (const limb of Object.values(figure.userData.limbs)) limb.rotation.x = 0;
+  }
+
   const pedestrian = {
     group,
     figure,
@@ -139,6 +188,9 @@ export function createPedestrian(materials, layout, { index }) {
     },
     get slot() {
       return slot;
+    },
+    get table() {
+      return table;
     },
     get hasBox() {
       return pizzaBox.visible;
@@ -153,7 +205,7 @@ export function createPedestrian(materials, layout, { index }) {
     },
 
     boxPosition(out) {
-      return out.copy(pizzaBox.position);
+      return pizzaBox.getWorldPosition(out);
     },
 
     isDone() {
@@ -163,6 +215,9 @@ export function createPedestrian(materials, layout, { index }) {
     start(atBay) {
       bay = atBay;
       slot = null;
+      table = null;
+      seat = null;
+      stand();
       pizzaBox.visible = false;
       group.visible = true;
       follower.path = null;
@@ -180,9 +235,38 @@ export function createPedestrian(materials, layout, { index }) {
       }
     },
 
+    // Called by the simulation when this diner's table empties, whether the
+    // meal finished or patience ran out. Someone still on their way to the
+    // chair is released too: left walking, they would arrive at a table the
+    // room has already emptied, sit in a seat it thinks is free, and stay
+    // there forever — holding their parking bay and their car with them.
+    leaveTable() {
+      if (state !== 'SEATED' && state !== 'WALKING_TO_TABLE') return;
+      stand();
+      // A seated diner retraces the whole route from the chair; one still
+      // walking turns round where it stands and walks back the way it came.
+      if (state === 'SEATED') follower.set(walkFromSeatPath(layout, bay, table, seat));
+      else follower.turnBack();
+      table = null;
+      seat = null;
+      setState('WALKING_OUT');
+    },
+
     update(dt, world) {
       switch (state) {
         case 'WALKING_IN': {
+          // The dine-in decision is made once, before any path exists, so a
+          // walker is never retargeted mid-route.
+          if (!follower.path) {
+            const claim = world.claimSeat();
+            if (claim) {
+              table = claim.table;
+              seat = claim.seat;
+              follower.set(walkToSeatPath(layout, bay, table, seat));
+              setState('WALKING_TO_TABLE');
+              return;
+            }
+          }
           // Join the line only on arrival. Holding a slot from the car lets
           // a slow walker keep a place in front of people already queued.
           const tail = slotPosition(layout, world.queueLength());
@@ -227,8 +311,8 @@ export function createPedestrian(materials, layout, { index }) {
 
         case 'AT_COUNTER': {
           animateLegs(dt, false);
-          // Serving needs the cashier in the sell zone. Stepping away pauses
-          // the timer rather than resetting it.
+          // Serving needs the cashier in the sell zone with a pizza in hand.
+          // When that stops being true the timer pauses rather than resetting.
           if (world.canServe()) timer += dt;
           if (timer >= sim.serveSeconds) {
             // The box appears in the customer's hands when the thrown one lands.
@@ -237,6 +321,25 @@ export function createPedestrian(materials, layout, { index }) {
             slot = null;
             setState('WALKING_OUT');
           }
+          return;
+        }
+
+        case 'WALKING_TO_TABLE': {
+          follower.step(dt, sim.speeds.walk);
+          place(follower.x, follower.z, follower.heading);
+          animateLegs(dt, !follower.done);
+          if (follower.done) {
+            // The room only starts wanting a pizza now, with somebody in the
+            // chair. A table that emptied during the walk starts a fresh wait.
+            world.sitDown(table, seat);
+            sit();
+            setState('SEATED');
+          }
+          return;
+        }
+
+        case 'SEATED': {
+          // The pose is static until the table empties; the room decides when.
           return;
         }
 

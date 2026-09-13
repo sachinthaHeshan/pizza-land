@@ -14,6 +14,9 @@ export const TEXTURE_KEYS = [
   'sign',
   'sellBanner',
   'ovenBanner',
+  'stripeBlue',
+  'stripeGreen',
+  'tableBanner',
 ];
 
 export function defaultCanvasFactory(width, height) {
@@ -101,7 +104,7 @@ function wallTile(factory) {
   return finish(canvas);
 }
 
-function stripe(factory) {
+function stripes(factory, colour) {
   const width = 256;
   const height = 64;
   const canvas = factory(width, height);
@@ -109,11 +112,15 @@ function stripe(factory) {
   const bands = 10;
   const w = width / bands;
   for (let i = 0; i < bands; i++) {
-    ctx.fillStyle = i % 2 === 0 ? '#d8382f' : '#f6efe4';
+    ctx.fillStyle = i % 2 === 0 ? colour : '#f6efe4';
     ctx.fillRect(i * w, 0, w, height);
   }
   return finish(canvas);
 }
+
+const stripe = (factory) => stripes(factory, '#d8382f');
+const stripeBlue = (factory) => stripes(factory, '#2f6fb0');
+const stripeGreen = (factory) => stripes(factory, '#3f8a4f');
 
 function wood(factory) {
   const size = 512;
@@ -314,6 +321,47 @@ function sellBanner(factory) {
   return finish(canvas);
 }
 
+// The prompt over a table waiting for a pizza. Same panel as the sell banner
+// so the two read as one family, with a single short word that stays legible
+// at the default zoom.
+function tableBanner(factory) {
+  const width = 1024;
+  const height = 512;
+  const canvas = factory(width, height);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+
+  const inset = 44;
+  roundedRect(ctx, inset, inset, width - inset * 2, height - inset * 2, 84);
+  ctx.fillStyle = 'rgba(255, 214, 150, 0.32)';
+  ctx.fill();
+  ctx.shadowColor = '#ffb13b';
+  ctx.shadowBlur = 36;
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = '#ffd772';
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  const inner = inset + 16;
+  roundedRect(ctx, inner, inner, width - inner * 2, height - inner * 2, 70);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.stroke();
+
+  pizzaSlice(ctx, 300, 256, 300);
+
+  ctx.font = '900 170px "Arial Black", "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 22;
+  ctx.strokeStyle = '#3b2314';
+  ctx.strokeText('SERVE', 670, 262);
+  ctx.fillStyle = '#ffd23a';
+  ctx.fillText('SERVE', 670, 262);
+  return finish(canvas);
+}
+
 // The oven's count banner. It redraws in place when the count changes, and
 // stays blank until the simulation first sets a count.
 export function ovenBannerTexture(factory = defaultCanvasFactory) {
@@ -371,6 +419,9 @@ const GENERATORS = {
   sign,
   sellBanner,
   ovenBanner: ovenBannerTexture,
+  stripeBlue,
+  stripeGreen,
+  tableBanner,
 };
 
 export function createTextures(canvasFactory = defaultCanvasFactory) {

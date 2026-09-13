@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { createFigure } from '../../src/models/figure.js';
+import { createFigure, LEG_PROPORTIONS } from '../../src/models/figure.js';
 import { boundsOf, expectFinite } from '../helpers/bounds.js';
 import { stubMaterials } from '../helpers/stubs.js';
 
@@ -111,5 +111,11 @@ describe('createFigure', () => {
   it('still stands with its feet on the ground', () => {
     const bounds = boundsOf(createFigure(materials, spec));
     expect(bounds.min.y).toBeCloseTo(0, 3);
+  });
+
+  it('exposes the hip height so a seated pose can be derived', () => {
+    const figure = createFigure(stubMaterials(), { height: 1.7, cloth: 'clothBlue', hair: 'hairDark' });
+    const hip = figure.userData.limbs.legL.position.y;
+    expect(LEG_PROPORTIONS.hip * 1.7).toBeCloseTo(hip, 6);
   });
 });

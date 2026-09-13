@@ -43,6 +43,10 @@ export const ARM_PROPORTIONS = Object.freeze({
   length: P.armTop - P.armBottom,
 });
 
+// The hip height as a fraction of the figure's height, for anything that has
+// to seat the figure rather than stand it.
+export const LEG_PROPORTIONS = Object.freeze({ hip: P.legTop });
+
 export function createFigure(materials, spec) {
   const {
     x = 0,

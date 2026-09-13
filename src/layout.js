@@ -348,14 +348,88 @@ export const layout = {
     ],
   },
 
+  // A small town across the road. Every choice comes from the seed, so it is
+  // the same on every load. The camera sits on the +z, −x side, so fronts face
+  // +z, and buildings stay low enough never to hide the road.
+  town: {
+    seed: 20260917,
+    x: [-78, 78],
+    kerbStrip: {
+      z: [41, 44],
+      lampZ: 41.6,
+      binZ: 41.6,
+      treeZ: 42.6,
+      benchZ: 43.2,
+      firstTreeX: -72,
+      treeSpacing: 12,
+      benchOffset: 3,
+      binOffset: 3,
+      busStopX: -6,
+    },
+    rearFence: { z: [44.5, 52] },
+    firstRow: { back: 52, front: 61, lane: [61, 74], shopChance: 0.6, twoStoreyChance: 0.4, maxHeight: 7 },
+    secondRow: { back: 74, front: 83, garden: [83, 88], twoStoreyChance: 0.7, maxHeight: 9 },
+    lot: { minWidth: 10, maxWidth: 14, alleyChance: 0.35, alleyWidth: [2, 4] },
+    shopWalls: [3.4, 6.4],
+    houseWalls: [3.0, 6.0],
+    parapet: 0.4,
+    roofRise: [2.0, 2.4],
+    chimney: { chance: 0.5, rise: 0.4 },
+    laneProps: { planterOffset: 1.6, planterZ: 62.2, benchZ: 66 },
+    gardenHedge: { z: 87.8, doorGap: 1.6, inset: 0.3 },
+    treeLine: { z: [89, 93], treeZ: [90.2, 92.8], firstX: -72, spacing: 12, jitter: 1, pineChance: 0.7 },
+    trees: { round: [4.5, 5.2], pine: [5, 6] },
+  },
+
+  // Four tables in the dining wing. Every coordinate here was measured by
+  // raycasting the built scene along camera.direction: this camera only sees
+  // faces pointing +z or -x, and the west wall, storefront plinth and sign
+  // each hide part of the dining floor. Both columns are served from the
+  // central aisle because the storefront hides the floor along the east wall.
+  dining: {
+    tables: [
+      { x: -8.4, z: -2.6, zone: { x: [-7.7, -7.0], z: [-3.05, -2.15] } },
+      { x: -5.2, z: -2.6, zone: { x: [-6.6, -5.9], z: [-3.05, -2.15] } },
+      { x: -8.4, z: -4.8, zone: { x: [-7.7, -7.0], z: [-5.25, -4.35] } },
+      { x: -5.2, z: -4.8, zone: { x: [-6.6, -5.9], z: [-5.25, -4.35] } },
+    ],
+    // `height` is the underside of the top slab, so the top surface is
+    // height + thickness.
+    top: { size: 1.0, height: 0.78, thickness: 0.06 },
+    pedestal: { radius: 0.12, footRadius: 0.32, footHeight: 0.05 },
+    chair: { offset: 0.75, seatHeight: 0.45, seatThickness: 0.05, size: 0.44, backHeight: 0.85 },
+    // Narrower than the sell and oven banners, and narrower than the 1.10 m
+    // between two zone centres in the same row: the marker centres a banner
+    // on its zone, so a wider one overlaps its neighbour's whenever both
+    // tables wait. Still the 2:1 shape of its canvas.
+    // 1.5 wide, not 1.6: centred on their tables, the closest pair of
+    // banners is 1.556 m apart on screen, so anything wider overlaps.
+    banner: { y: 2.3, width: 1.5, height: 0.75, bob: 0.06 },
+    seatsPerTable: 2,
+    eatSeconds: 40,
+    patienceSeconds: 60,
+    dineInChance: 0.5,
+    seed: 20260913,
+    tablePrice: 8,
+    // Customers walk in through the middle of the storefront door.
+    doorX: -5.4,
+  },
+
   lighting: {
     hemi: { sky: 0xbcd6ff, ground: 0x6b5a45, intensity: 0.55 },
     sun: {
       color: 0xfff2dd,
       intensity: 2.1,
       position: [-18, 26, 14],
-      shadowMapSize: 2048,
-      shadowBounds: 26,
+      shadowMapSize: 4096,
+      // Wide enough for the view's corners at zoom 1, panned to any extreme,
+      // on screens up to 2.6:1 — a real 3440x1440 ultrawide already needs 46.2.
+      shadowBounds: 50,
+      // Orthographic shadow cameras accept a negative near plane. The sun sits
+      // 34.6 m from what it lights, and tall corners of the view reach 5.9 m
+      // past it on the sun's side, so a positive near would clip them away.
+      shadowNear: -20,
+      shadowFar: 120,
       shadowBias: -0.0005,
     },
     warm: { color: 0xffb066, intensity: 12, distance: 9, decay: 2 },
@@ -385,5 +459,6 @@ export const layout = {
     queue: { min: [-2.0, 0, 4.6], max: [3.1, 1.8, 8.0] },
     simulation: { min: [-74, 0, 4], max: [74, 2.2, 42] },
     traffic: { min: [-80, 0, 25], max: [80, 3.4, 42] },
+    town: { min: [-78, 0, 41], max: [78, 9, 95] },
   },
 };

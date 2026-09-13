@@ -1,3 +1,5 @@
+import { planTown } from '../town/planTown.js';
+
 export const PLAYER_RADIUS = 0.25;
 
 function wall(axis, at, span, thickness) {
@@ -66,6 +68,20 @@ export function playerObstacles(layout) {
     const rad = barrier.baseRadius;
     boxes.push({ x: [px - rad, px + rad], z: [pz - rad, pz + rad] });
   }
+
+  // The dining tables. Chairs are left open so a player can squeeze past
+  // them into a delivery zone.
+  const tableHalf = layout.dining.top.size / 2;
+  for (const spot of layout.dining.tables) {
+    boxes.push({
+      x: [spot.x - tableHalf, spot.x + tableHalf],
+      z: [spot.z - tableHalf, spot.z + tableHalf],
+    });
+  }
+
+  // The town across the road blocks the player exactly where it is drawn:
+  // both come from the same plan.
+  boxes.push(...planTown(layout).obstacles);
 
   return boxes;
 }

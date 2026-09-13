@@ -6,12 +6,10 @@ function fakeContext() {
     gain: { value: 0, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
     connect: vi.fn(),
   };
-  const osc = {
-    frequency: { value: 0, setValueAtTime: vi.fn() },
-    type: '',
+  const source = {
+    buffer: null,
     connect: vi.fn(),
     start: vi.fn(),
-    stop: vi.fn(),
   };
   return {
     currentTime: 0,
@@ -19,8 +17,16 @@ function fakeContext() {
     state: 'running',
     resume: vi.fn(),
     createGain: vi.fn(() => gain),
-    createOscillator: vi.fn(() => osc),
+    createBufferSource: vi.fn(() => source),
+    decodeAudioData: vi.fn(async (data) => ({ data })),
+    source,
   };
+}
+
+function fakeFetch(bytes = new ArrayBuffer(8)) {
+  return vi.fn(async () => ({
+    arrayBuffer: async () => bytes,
+  }));
 }
 
 describe('createHorn', () => {
@@ -50,12 +56,28 @@ describe('createHorn', () => {
     expect(horn.enabled).toBe(true);
   });
 
-  it('sounds two tones per honk once enabled', () => {
+  it('plays the loaded sample once per honk', async () => {
     const context = fakeContext();
-    const horn = createHorn(() => context);
+    const decoded = { duration: 1 };
+    context.decodeAudioData = vi.fn(async () => decoded);
+    const fetchFn = fakeFetch();
+    const horn = createHorn(() => context, { sampleUrl: '/horn.mp3', fetch: fetchFn });
     horn.enable();
+    await vi.waitFor(() => expect(context.decodeAudioData).toHaveBeenCalled());
     horn.play();
-    expect(context.createOscillator).toHaveBeenCalledTimes(2);
+    expect(fetchFn).toHaveBeenCalledWith('/horn.mp3');
+    expect(context.createBufferSource).toHaveBeenCalledTimes(1);
+    expect(context.source.buffer).toBe(decoded);
+    expect(context.source.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays silent until the sample has loaded', () => {
+    const context = fakeContext();
+    context.decodeAudioData = vi.fn(() => new Promise(() => {}));
+    const horn = createHorn(() => context, { sampleUrl: '/horn.mp3', fetch: fakeFetch() });
+    horn.enable();
+    expect(() => horn.play()).not.toThrow();
+    expect(context.createBufferSource).not.toHaveBeenCalled();
   });
 
   it('survives a context factory that throws', () => {
